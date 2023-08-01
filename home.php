@@ -37,12 +37,30 @@
         </li>
       </ul>
       <ul class="navbar-nav">
-        <li class="nav-item">
-          <a class="nav-link" href="login.php">Login</a>
-        </li>
-        <li class="nav-item">
+       
+      <?php
+        // Check if the user is logged in
+        session_start();
+        if (isset($_SESSION['username'])) {
+          // User is logged in, show logout button
+          ?>
+          <li class="nav-item">
+            <a class="nav-link" href="logout.php">Logout</a>
+          </li>
+          <?php
+        } else {
+          // User is not logged in, show login button
+          ?>
+          <li class="nav-item">
+            <a class="nav-link" href="login.php">Login</a>
+          </li>
+          <li class="nav-item">
           <a class="nav-link" href="registration.php">Register</a>
         </li>
+          <?php
+        }
+        ?>
+        
       </ul>
     </div>
   </div>
@@ -59,7 +77,16 @@
   </div>
 </section>
 
-
+<?php
+  session_start();
+  if (isset($_SESSION['username'])) {
+    echo "<h1 class='text-center mt-2'>Welcome, " . $_SESSION['username'] . "!</h1>"; // Show the logged-in user's name
+  } else {
+    // Redirect back to the login page if not logged in
+    header("location: login.php");
+    exit;
+  }
+  ?>
 <!-- What is shoe store Section with Image -->
 <section class="my-5">
   <div class="container">

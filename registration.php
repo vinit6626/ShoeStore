@@ -1,3 +1,78 @@
+<?php
+error_reporting(E_ALL);
+ini_set('display_errors', 1);
+
+require_once("db_conn.php");
+
+// Initialize error messages array
+$errors = array();
+
+function sanitizeInput($input){
+  $input = str_replace(['(',')','"', ';'], '', $input);
+  $input = strip_tags($input);
+  $input = trim($input);
+  $input = htmlentities($input, ENT_QUOTES, 'UTF-8');
+  return $input;
+}
+// Check if the form is submitted
+if ($_SERVER["REQUEST_METHOD"] === "POST") {
+    // Retrieve form data
+    $username = sanitizeInput($_POST["username"]);
+    $email = sanitizeInput($_POST["email"]);
+    $password = sanitizeInput($_POST["password"]);
+    $cpassword = sanitizeInput($_POST["cpassword"]);
+    $hashedPassword = password_hash($password, PASSWORD_DEFAULT);
+
+
+    if (empty($errors)) {
+
+      // Check if the username is unique
+      $query = "SELECT * FROM users WHERE username = ?";
+      $stmt = mysqli_prepare($conn, $query);
+      mysqli_stmt_bind_param($stmt, "s", $username);
+      mysqli_stmt_execute($stmt);
+      $result = mysqli_stmt_get_result($stmt);
+      if (mysqli_num_rows($result) > 0) {
+          $errors["username"] = "Username is already taken. Please choose a different username.";
+      }
+      mysqli_stmt_close($stmt);
+  
+      // Check if the email is unique
+      $query = "SELECT * FROM users WHERE email = ?";
+      $stmt = mysqli_prepare($conn, $query);
+      mysqli_stmt_bind_param($stmt, "s", $email);
+      mysqli_stmt_execute($stmt);
+      $result = mysqli_stmt_get_result($stmt);
+      if (mysqli_num_rows($result) > 0) {
+          $errors["email"] = "Email is already registered. Please use a different email.";
+      }
+      mysqli_stmt_close($stmt);
+
+    }
+
+
+    // If there are no errors, then insert data only
+    if (empty($errors)) {
+        // Prepare and execute the database insertion query
+        $stmt = "INSERT INTO users (username, email, userPassword) VALUES (?, ?, ?)";
+        $stmt = mysqli_prepare($conn, $stmt);
+        mysqli_stmt_bind_param($stmt, "sss", $username, $email, $hashedPassword);
+
+        $result = mysqli_stmt_execute($stmt);
+        if ($result) {
+            echo "Data inserted successfully!";
+            header("location: login.php");
+            exit;
+        } else {
+            echo "Error: " . $stmt->error;
+            header("location: registration.php");
+        }
+        mysqli_stmt_close($stmt);
+    }
+}
+?>
+
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -69,7 +144,7 @@
       <div class="row justify-content-center">
         <div class="col-md-6">
           <h2 class="mb-4 text-center">Sign up</h2>
-          <form method="POST" action="<?php echo $_SERVER['PHP_SELF'];?>" id="registration-form" onsubmit="return validateForm();">
+          <form method="POST" action="<?php echo $_SERVER['PHP_SELF'];?>" id="registration-form">
             <!-- Form fields and error messages -->
             <div class="mb-3">
               <label for="username" class="form-label">Username</label>
@@ -79,7 +154,7 @@
             </div>
             <div class="mb-3">
               <label for="email" class="form-label">Email</label>
-              <input type="email" class="form-control" id="email" name="email" placeholder="Email"
+              <input type="text" class="form-control" id="email" name="email" placeholder="Email"
                 value="<?php echo isset($email) ? $email : ''; ?>">
               <span class="text-danger" id="email-error"><?php echo isset($errors['email']) ? $errors['email'] : ''; ?></span>
             </div>
@@ -123,3 +198,73 @@
 
 </body>
 </html>
+
+
+<!-- JavaScript Section -->
+<script>
+
+  const form = document.getElementById("registration-form");
+
+  form.addEventListener("submit", function(event) {
+    event.preventDefault(); // Prevent form submission to check validation
+
+    // Validate the form fields
+    const isValid = validateForm();
+
+    // If all fields are valid, submit the form
+    if (isValid) {
+      form.submit();
+    }
+  });
+
+  function validateForm() {
+    let isValid = true;
+    const username = document.getElementById("username").value.trim();
+    const email = document.getElementById("email").value.trim();
+    const password = document.getElementById("password").value.trim();
+    const cpassword = document.getElementById("cpassword").value.trim();
+
+    // Clear previous error messages
+    document.getElementById("username-error").textContent = "";
+    document.getElementById("email-error").textContent = "";
+    document.getElementById("password-error").textContent = "";
+    document.getElementById("cpassword-error").textContent = "";
+
+    // Validate username
+    if (username === "") {
+      document.getElementById("username-error").textContent = "Username is required.";
+      isValid = false;
+    }
+
+    // Validate email
+    if (email === "") {
+      document.getElementById("email-error").textContent = "Email is required.";
+      isValid = false;
+    } else if (!emailIsValid(email)) {
+      document.getElementById("email-error").textContent = "Invalid email format.";
+      isValid = false;
+    }
+
+    // Validate password
+    if (password === "") {
+      document.getElementById("password-error").textContent = "Password is required.";
+      isValid = false;
+    }
+
+    // Validate confirm password
+    if (cpassword === "") {
+      document.getElementById("cpassword-error").textContent = "Confirm Password is required.";
+      isValid = false;
+    } else if (password !== cpassword) {
+      document.getElementById("cpassword-error").textContent = "Passwords do not match.";
+      isValid = false;
+    }
+
+    return isValid;
+  }
+
+  function emailIsValid(email) {
+    return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+  }
+  
+</script>

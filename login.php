@@ -1,3 +1,55 @@
+<?php
+session_start();
+error_reporting(E_ALL);
+ini_set('display_errors', 1);
+
+require_once("db_conn.php");
+
+function sanitizeInput($input){
+  $input = str_replace(['(',')','"', ';'], '', $input);
+  $input = strip_tags($input);
+  $input = trim($input);
+  $input = htmlentities($input, ENT_QUOTES, 'UTF-8');
+  return $input;
+}
+
+if ($_SERVER["REQUEST_METHOD"] === "POST") {
+    // Retrieve form data
+    $username = sanitizeInput($_POST["username"]);
+    $password = sanitizeInput($_POST["password"]);
+
+    // Validate the input (you can also use additional checks)
+    if (empty($username) || empty($password)) {
+        // Handle validation errors
+        echo "Please enter both username and password.";
+        exit;
+    }
+// echo "Please enter";
+// die;
+    // Retrieve hashed password from the database based on the username
+    $stmt = "SELECT userPassword FROM users WHERE username = ?";
+    $stmt = mysqli_prepare($conn, $stmt);
+    mysqli_stmt_bind_param($stmt, "s", $username);
+    mysqli_stmt_execute($stmt);
+    $result = mysqli_stmt_get_result($stmt);
+    $row = mysqli_fetch_assoc($result);
+    $hashedPassword = $row['userPassword'];
+    mysqli_stmt_close($stmt);
+
+    // Verify the password
+    if (password_verify($password, $hashedPassword)) {
+        // Password is correct, log in the user
+        $_SESSION['username'] = $username;
+        header("location: home.php"); // Redirect to the dashboard or another authorized page
+        exit;
+    } else {
+        // Password is incorrect, show an error message or redirect back to the login page
+        echo "<div class='alert alert-success' role='alert' style='margin-bottom: 0px;'>Invalid username or password.</div>";
+    }
+}
+?>
+
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -66,14 +118,18 @@
     <div class="row justify-content-center">
       <div class="col-md-6">
         <h2 class="mb-4 text-center">Login</h2>
-        <form>
+        <form method="POST" action="<?php echo $_SERVER['PHP_SELF'];?>" id="login-form">
           <div class="mb-3">
             <label for="username" class="form-label">Username</label>
             <input type="text" class="form-control" id="username" name="username" placeholder="User Name">
+            <span class="text-danger" id="username-error"><?php echo isset($errors['username']) ? $errors['username'] : ''; ?></span>
+
           </div>
           <div class="mb-3">
             <label for="password" class="form-label">Password</label>
             <input type="password" class="form-control" id="password" name="password" placeholder="Password">
+            <span class="text-danger" id="password-error"><?php echo isset($errors['password']) ? $errors['password'] : ''; ?></span>
+
           </div>
           <div class="text-center">
             <button type="submit" class="btn btn-primary">Login</button>
@@ -104,3 +160,47 @@
 
 </body>
 </html>
+
+
+
+<!-- JavaScript Section -->
+<script>
+  const form = document.getElementById("login-form");
+
+  form.addEventListener("submit", function(event) {
+    event.preventDefault(); // Prevent form submission to check validation
+
+    // Validate the form fields
+    const isValid = validateForm();
+
+    // If all fields are valid, submit the form
+    if (isValid) {
+      form.submit();
+    }
+  });
+
+  function validateForm() {
+    let isValid = true;
+    const username = document.getElementById("username").value.trim();
+    const password = document.getElementById("password").value.trim();
+
+    // Clear previous error messages
+    document.getElementById("username-error").textContent = "";
+    document.getElementById("password-error").textContent = "";
+
+    // Validate username
+    if (username === "") {
+      document.getElementById("username-error").textContent = "Username is required.";
+      isValid = false;
+    }
+
+    // Validate password
+    if (password === "") {
+      document.getElementById("password-error").textContent = "Password is required.";
+      isValid = false;
+    }
+
+    return isValid;
+  }
+
+</script>
