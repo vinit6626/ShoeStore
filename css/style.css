@@ -1,0 +1,161 @@
+
+.custom-bg {
+    background-image: url('../images/15.jpg');
+    background-size: cover; 
+    background-position: center;
+    background-repeat: no-repeat; 
+  }
+
+    .homepage-heading-section{
+        height: 400px;
+    }
+
+    .homepage-heading-div{
+        padding: 130px;
+    }
+
+    .homepage-image-card{
+        height: 550px;
+    }
+
+    .homepage-section-info{
+        width: 100%;
+        margin: auto;
+    }
+
+    .homepage-image-about{
+        height: 350px;
+    }
+
+    .homepage-three-icon-Section{
+        height:380px;
+    }
+
+    .homepage-features-box {
+        padding: 5%;
+    }
+    .icons {
+        color: #ef8172;
+        margin-bottom: 1rem;
+    }
+    .footer-section{
+        height: 150px;
+    }
+
+    /* about us page start */
+    .staff-card {
+        text-align: center;
+        margin-bottom: 30px;
+    }
+  
+    .staff-photo {
+        border-radius: 50%;
+        width: 300px;
+        height: 300px;
+        object-fit: cover;
+        margin-bottom: 10px;
+    }
+   
+    /* about us page end */
+
+    /* contact us page start */
+
+     .contact-section {
+        padding: 60px 0;
+      }
+  
+      .map-container {
+        width: 100%;
+        height: 400px;
+        margin: auto;
+      }
+      .contact-details-section {
+        padding: 60px 0;
+      }
+  
+      /* Style for the contact details content */
+      .contact-details-content {
+        max-width: 400px; /* Adjust the width as needed */
+        margin: 0 auto;
+      }
+
+      .line{
+        border-color: grey;
+        border-style: none;
+        border-top-style: dotted;
+        border-width: 5px;
+        width: 7%;
+        margin: auto;
+      }
+    /* contact us page end */
+    
+    /* product page start */
+    .product-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+        gap: 20px;
+      }
+  
+      /* Style for product card */
+      .product-card {
+        border: 1px solid #ddd;
+        padding: 15px;
+        border-radius: 5px;
+        text-align: center;
+      }
+  
+      /* Style for filter and sorting container */
+      .filter-sort-container {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 20px;
+      }
+  
+      /* Style for filter and sorting elements */
+      .filter {
+        margin-right: 20px;
+      }
+  
+      .sort {
+        display: inline-block;
+        padding: 5px 10px;
+        border: 1px solid #ddd;
+        border-radius: 5px;
+        cursor: pointer;
+      }
+  
+      .sort.active {
+        background-color: #007bff;
+        color: #fff;
+      }
+
+    /* product page end */
+
+
+    /* item page start */
+    .item-image{
+        height: 600px;
+
+    }
+    .delivery-button{
+        color: blue;
+    }
+    .center{
+        margin-left: 35%;
+    }
+
+    .width60{
+        width: 40%;
+        margin: auto;
+    }
+    /* item page end */
+
+
+
+    /* insert shoes start */
+    .width40{
+        width: 40%;
+        /* margin: auto; */
+    }
+    /* insert shoes end */
