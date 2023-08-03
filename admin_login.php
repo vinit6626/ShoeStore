@@ -1,7 +1,8 @@
 <?php
-
-
 session_start();
+// error_reporting(E_ALL);
+// ini_set('display_errors', 1);
+
 require_once("db_conn.php");
 
 function sanitizeInput($input){
@@ -13,41 +14,43 @@ function sanitizeInput($input){
 }
 
 if ($_SERVER["REQUEST_METHOD"] === "POST") {
-    $username = sanitizeInput($_POST["username"]);
-    $password = sanitizeInput($_POST["password"]);
+    // Retrieve form data
+    $adminname = sanitizeInput($_POST["adminname"]);
+    $adminPassword = sanitizeInput($_POST["adminPassword"]);
 
-    if (empty($username) || empty($password)) {
+    // Validate the input (you can also use additional checks)
+    if (empty($adminname) || empty($adminPassword)) {
         // Handle validation errors
         echo "Please enter both username and password.";
         exit;
     }
-    
-    $stmt = "SELECT password, user_type FROM account WHERE username = ?";
+// echo "Please enter";
+// die;
+    // Retrieve hashed password from the database based on the username
+    $stmt = "SELECT password FROM account WHERE username = ?";
     $stmt = mysqli_prepare($conn, $stmt);
-    mysqli_stmt_bind_param($stmt, "s", $username);
+    mysqli_stmt_bind_param($stmt, "s", $adminname);
     mysqli_stmt_execute($stmt);
     $result = mysqli_stmt_get_result($stmt);
     $row = mysqli_fetch_assoc($result);
+    $hashedPassword = $row['password'];
     mysqli_stmt_close($stmt);
 
-    if ($row && password_verify($password, $row['password'])) {
-        $_SESSION['username'] = $username;
-        $_SESSION['usertype'] = $row['user_type'];
+    // Verify the password
+    if (password_verify($adminPassword, $hashedPassword)) {
+        // Password is correct, log in the user
+        $_SESSION['username'] = $adminname;
+        $_SESSION['usertype'] = "Admin";
 
-        if ($_SESSION['usertype'] === "Admin") {
-            header("location: home.php"); 
-        } elseif ($_SESSION['usertype'] === "User") {
-            header("location: home.php"); 
-        } else {
-          header("location: login.php"); 
-        }
+        header("location: home.php"); // Redirect to the dashboard or another authorized page
         exit;
     } else {
-        echo "<div class='alert alert-danger alert-dismissible fade show' role='alert' style='margin-bottom: 0px;'>Invalid username or password.<button type='button' class='btn-close' data-bs-dismiss='alert' aria-label='Close'></button></div>";
+        // Password is incorrect, show an error message or redirect back to the login page
+      
+        echo "<div class='alert alert-danger alert-dismissible fade show' role='alert' style='margin-bottom: 0px;'>Invalid user name or password.<button type='button' class='btn-close' data-bs-dismiss='alert' aria-label='Close'></button></div>";
     }
 }
 ?>
-
 
 
 <!DOCTYPE html>
@@ -65,9 +68,7 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
 
 </head>
 <body>
-
 <?php require_once('navbar.php'); ?>
-
 
 
 <!-- Welcome Section with Image -->
@@ -85,25 +86,25 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
   <div class="container">
     <div class="row justify-content-center">
       <div class="col-md-6">
-        <h2 class="mb-4 text-center">Login</h2>
-        <form method="POST" action="<?php echo $_SERVER['PHP_SELF'];?>" id="login-form">
+        <h2 class="mb-4 text-center">Admin Login</h2>
+        <form method="POST" action="<?php echo $_SERVER['PHP_SELF'];?>" id="admin-login-form">
           <div class="mb-3">
-            <label for="username" class="form-label">Username</label>
-            <input type="text" class="form-control" id="username" name="username" placeholder="User Name">
-            <span class="text-danger" id="username-error"><?php echo isset($errors['username']) ? $errors['username'] : ''; ?></span>
+            <label for="adminname" class="form-label">Admin Name</label>
+            <input type="text" class="form-control" id="adminname" name="adminname" placeholder="Admin User Name">
+            <span class="text-danger" id="adminname-error"><?php echo isset($errors['adminname']) ? $errors['adminname'] : ''; ?></span>
 
           </div>
           <div class="mb-3">
-            <label for="password" class="form-label">Password</label>
-            <input type="password" class="form-control" id="password" name="password" placeholder="Password">
-            <span class="text-danger" id="password-error"><?php echo isset($errors['password']) ? $errors['password'] : ''; ?></span>
+            <label for="adminPassword" class="form-label">Password</label>
+            <input type="password" class="form-control" id="adminPassword" name="adminPassword" placeholder="Admin Password">
+            <span class="text-danger" id="adminPassword-error"><?php echo isset($errors['adminPassword']) ? $errors['adminPassword'] : ''; ?></span>
 
           </div>
           <div class="text-center">
             <button type="submit" class="btn btn-primary">Login</button>
           </div>
           <div class="text-center mt-3">
-            <a href="registration.php">Create Account</a>
+            <a href="admin_registration.php">Create Account</a>
           </div>
         </form>
       </div>
@@ -133,7 +134,7 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
 
 <!-- JavaScript Section -->
 <script>
-  const form = document.getElementById("login-form");
+  const form = document.getElementById("admin-login-form");
 
   form.addEventListener("submit", function(event) {
     event.preventDefault(); // Prevent form submission to check validation
@@ -149,22 +150,22 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
 
   function validateForm() {
     let isValid = true;
-    const username = document.getElementById("username").value.trim();
-    const password = document.getElementById("password").value.trim();
+    const adminname = document.getElementById("adminname").value.trim();
+    const adminPassword = document.getElementById("adminPassword").value.trim();
 
     // Clear previous error messages
-    document.getElementById("username-error").textContent = "";
-    document.getElementById("password-error").textContent = "";
+    document.getElementById("adminname-error").textContent = "";
+    document.getElementById("adminPassword-error").textContent = "";
 
     // Validate username
-    if (username === "") {
-      document.getElementById("username-error").textContent = "Username is required.";
+    if (adminname === "") {
+      document.getElementById("adminname-error").textContent = "Admin Username is required.";
       isValid = false;
     }
 
     // Validate password
-    if (password === "") {
-      document.getElementById("password-error").textContent = "Password is required.";
+    if (adminPassword === "") {
+      document.getElementById("adminPassword-error").textContent = "Admin Password is required.";
       isValid = false;
     }
 

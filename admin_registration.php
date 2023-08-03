@@ -17,12 +17,12 @@ function sanitizeInput($input){
 // Check if the form is submitted
 if ($_SERVER["REQUEST_METHOD"] === "POST") {
     // Retrieve form data
-    $username = sanitizeInput($_POST["username"]);
-    $email = sanitizeInput($_POST["email"]);
-    $password = sanitizeInput($_POST["password"]);
+    $username = sanitizeInput($_POST["adminname"]);
+    $email = sanitizeInput($_POST["adminemail"]);
+    $password = sanitizeInput($_POST["adminPassword"]);
     $cpassword = sanitizeInput($_POST["cpassword"]);
     $hashedPassword = password_hash($password, PASSWORD_DEFAULT);
-    $user_type = "User";
+    $user_type = "Admin";
 
 
     if (empty($errors)) {
@@ -34,18 +34,18 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
       mysqli_stmt_execute($stmt);
       $result = mysqli_stmt_get_result($stmt);
       if (mysqli_num_rows($result) > 0) {
-          $errors["username"] = "Username is already taken. Please choose a different username.";
+          $errors["adminname"] = "Admin Name is already taken. Please choose a different Admin Name.";
       }
       mysqli_stmt_close($stmt);
   
       // Check if the email is unique
-      $query = "SELECT * FROM account WHERE email = ?";
+      $query = "SELECT * FROM account WHERE username = ?";
       $stmt = mysqli_prepare($conn, $query);
-      mysqli_stmt_bind_param($stmt, "s", $email);
+      mysqli_stmt_bind_param($stmt, "s", $username);
       mysqli_stmt_execute($stmt);
       $result = mysqli_stmt_get_result($stmt);
       if (mysqli_num_rows($result) > 0) {
-          $errors["email"] = "Email is already registered. Please use a different email.";
+          $errors["adminemail"] = "Admin Email is already registered. Please use a different Admin Email.";
       }
       mysqli_stmt_close($stmt);
 
@@ -54,23 +54,22 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
 
     // If there are no errors, then insert data only
     if (empty($errors)) {
-      // Prepare and execute the database insertion query
-      $stmt = "INSERT INTO account (username, email, password, user_type) VALUES (?, ?, ?, ?)";
-      $stmt = mysqli_prepare($conn, $stmt);
-      mysqli_stmt_bind_param($stmt, "ssss", $username, $email, $hashedPassword, $user_type);
-  
-      $result = mysqli_stmt_execute($stmt);
-      if ($result) {
-          echo "Data inserted successfully!";
-          header("location: login.php");
-          exit;
-      } else {
-          echo "Error: " . $stmt->error;
-          header("location: registration.php");
-      }
-      mysqli_stmt_close($stmt);
-  }
-  
+        // Prepare and execute the database insertion query
+        $stmt = "INSERT INTO account (username,  email, password, user_type) VALUES (?, ?, ?, ?)";
+        $stmt = mysqli_prepare($conn, $stmt);
+        mysqli_stmt_bind_param($stmt, "ssss",$username, $email, $hashedPassword, $user_type);
+
+        $result = mysqli_stmt_execute($stmt);
+        if ($result) {
+            echo "Data inserted successfully!";
+            header("location: admin_login.php");
+            exit;
+        } else {
+            echo "Error: " . $stmt->error;
+            header("location: admin_registration.php");
+        }
+        mysqli_stmt_close($stmt);
+    }
 }
 ?>
 
@@ -90,6 +89,7 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
 
 </head>
 <body>
+
 
 <?php require_once('navbar.php'); ?>
 
@@ -112,25 +112,25 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
     <div class="container">
       <div class="row justify-content-center">
         <div class="col-md-6">
-          <h2 class="mb-4 text-center">Sign up</h2>
-          <form method="POST" action="<?php echo $_SERVER['PHP_SELF'];?>" id="registration-form">
+          <h2 class="mb-4 text-center">Admin Sign up</h2>
+          <form method="POST" action="<?php echo $_SERVER['PHP_SELF'];?>" id="admin-registration-form">
             <!-- Form fields and error messages -->
             <div class="mb-3">
-              <label for="username" class="form-label">Username</label>
-              <input type="text" class="form-control" id="username" name="username" placeholder="User Name"
-                value="<?php echo isset($username) ? $username : ''; ?>">
-              <span class="text-danger" id="username-error"><?php echo isset($errors['username']) ? $errors['username'] : ''; ?></span>
+              <label for="adminname" class="form-label">Admin Name</label>
+              <input type="text" class="form-control" id="adminname" name="adminname" placeholder="Admin Name"
+                value="<?php echo isset($adminname) ? $adminname : ''; ?>">
+              <span class="text-danger" id="adminname-error"><?php echo isset($errors['adminname']) ? $errors['adminname'] : ''; ?></span>
             </div>
             <div class="mb-3">
-              <label for="email" class="form-label">Email</label>
-              <input type="text" class="form-control" id="email" name="email" placeholder="Email"
-                value="<?php echo isset($email) ? $email : ''; ?>">
-              <span class="text-danger" id="email-error"><?php echo isset($errors['email']) ? $errors['email'] : ''; ?></span>
+              <label for="adminemail" class="form-label">Admin Email</label>
+              <input type="text" class="form-control" id="adminemail" name="adminemail" placeholder="Admin Email"
+                value="<?php echo isset($adminemail) ? $adminemail : ''; ?>">
+              <span class="text-danger" id="adminemail-error"><?php echo isset($errors['adminemail']) ? $errors['adminemail'] : ''; ?></span>
             </div>
             <div class="mb-3">
-              <label for="password" class="form-label">Password</label>
-              <input type="password" class="form-control" id="password" name="password" placeholder="Password">
-              <span class="text-danger" id="password-error"><?php echo isset($errors['password']) ? $errors['password'] : ''; ?></span>
+              <label for="adminPassword" class="form-label">Password</label>
+              <input type="password" class="form-control" id="adminPassword" name="adminPassword" placeholder="Admin Password">
+              <span class="text-danger" id="adminPassword-error"><?php echo isset($errors['adminPassword']) ? $errors['adminPassword'] : ''; ?></span>
             </div>
             <div class="mb-3">
               <label for="cpassword" class="form-label">Confirm Password</label>
@@ -141,7 +141,7 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
               <button type="submit" class="btn btn-primary">Sign up</button>
             </div>
             <div class="text-center mt-3">
-              <a href="login.php">Already a user</a>
+              <a href="admin_login.php">Already a user</a>
             </div>
           </form>
         </div>
@@ -172,7 +172,7 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
 <!-- JavaScript Section -->
 <script>
 
-  const form = document.getElementById("registration-form");
+  const form = document.getElementById("admin-registration-form");
 
   form.addEventListener("submit", function(event) {
     event.preventDefault(); // Prevent form submission to check validation
@@ -188,35 +188,35 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
 
   function validateForm() {
     let isValid = true;
-    const username = document.getElementById("username").value.trim();
-    const email = document.getElementById("email").value.trim();
-    const password = document.getElementById("password").value.trim();
+    const adminname = document.getElementById("adminname").value.trim();
+    const adminemail = document.getElementById("adminemail").value.trim();
+    const adminPassword = document.getElementById("adminPassword").value.trim();
     const cpassword = document.getElementById("cpassword").value.trim();
 
     // Clear previous error messages
-    document.getElementById("username-error").textContent = "";
-    document.getElementById("email-error").textContent = "";
-    document.getElementById("password-error").textContent = "";
+    document.getElementById("adminname-error").textContent = "";
+    document.getElementById("adminemail-error").textContent = "";
+    document.getElementById("adminPassword-error").textContent = "";
     document.getElementById("cpassword-error").textContent = "";
 
     // Validate username
-    if (username === "") {
-      document.getElementById("username-error").textContent = "Username is required.";
+    if (adminname === "") {
+      document.getElementById("adminname-error").textContent = "Admin Name is required.";
       isValid = false;
     }
 
     // Validate email
-    if (email === "") {
-      document.getElementById("email-error").textContent = "Email is required.";
+    if (adminemail === "") {
+      document.getElementById("adminemail-error").textContent = "Admin Email is required.";
       isValid = false;
-    } else if (!emailIsValid(email)) {
-      document.getElementById("email-error").textContent = "Invalid email format.";
+    } else if (!emailIsValid(adminemail)) {
+      document.getElementById("adminemail-error").textContent = "Invalid email format.";
       isValid = false;
     }
 
     // Validate password
-    if (password === "") {
-      document.getElementById("password-error").textContent = "Password is required.";
+    if (adminPassword === "") {
+      document.getElementById("adminPassword-error").textContent = "Password is required.";
       isValid = false;
     }
 
@@ -224,7 +224,7 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
     if (cpassword === "") {
       document.getElementById("cpassword-error").textContent = "Confirm Password is required.";
       isValid = false;
-    } else if (password !== cpassword) {
+    } else if (adminPassword !== cpassword) {
       document.getElementById("cpassword-error").textContent = "Passwords do not match.";
       isValid = false;
     }
@@ -232,8 +232,8 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
     return isValid;
   }
 
-  function emailIsValid(email) {
-    return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+  function emailIsValid(adminemail) {
+    return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(adminemail);
   }
   
 </script>

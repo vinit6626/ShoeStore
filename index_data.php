@@ -69,6 +69,25 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     ) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8mb4";
     mysqli_query($conn, $users);
 
+    $admin = "CREATE TABLE IF NOT EXISTS admins (
+        adminID INT(11) UNSIGNED AUTO_INCREMENT PRIMARY KEY NOT NULL,
+        adminname VARCHAR(50) NOT NULL,
+        adminemail VARCHAR(200) NOT NULL,
+        adminPassword VARCHAR(100) NOT NULL
+    ) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8mb4";
+    mysqli_query($conn, $admin);
+
+    $contacts = "CREATE TABLE IF NOT EXISTS contacts (
+        id INT(11) UNSIGNED AUTO_INCREMENT PRIMARY KEY NOT NULL,
+        name VARCHAR(200) NOT NULL,
+        email VARCHAR(200) NOT NULL,
+        phone VARCHAR(10) NOT NULL,
+        message VARCHAR(250) NOT NULL
+    ) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8mb4;
+    ";
+    mysqli_query($conn, $contacts);
+
+    
 
     echo "<h1 style='text-align: center; color: green; margin-top: 45vh;'>Database and Table are created Successfully.</h1>";
     echo "<form method='get' style='text-align: center; margin:10px;' action='home.php'> 

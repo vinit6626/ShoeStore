@@ -1,55 +1,29 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <link rel="icon" type="image/x-icon" href="./images/favicon.png">
-  <title>Shoe Store</title>
-  <!-- Link to Bootstrap CSS -->
-  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
-  <link rel="stylesheet" href="./css/style.css">
-  
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+<?php
+error_reporting(E_ALL);
+ini_set('display_errors', 1);
 
-</head>
-<body>
+require_once("db_conn.php");
 
-<!-- Navigation Bar -->
-<nav class="navbar navbar-expand-lg bg-dark navbar-dark">
-  <div class="container-fluid">
-    <a class="navbar-brand" href="index.php">Shoe Store</a>
-    <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarText" aria-controls="navbarText" aria-expanded="false" aria-label="Toggle navigation">
-      <span class="navbar-toggler-icon"></span>
-    </button>
-    <div class="collapse navbar-collapse" id="navbarText">
-      <ul class="navbar-nav me-auto mb-2 mb-lg-0">
-        <li class="nav-item">
-          <a class="nav-link" href="index.php">Home</a>
-        </li>
-        <li class="nav-item">
-          <a class="nav-link" href="product.php">Products</a>
-        </li>
-        <li class="nav-item">
-          <a class="nav-link" href="about.php">About</a>
-        </li>
-        <li class="nav-item">
-          <a class="nav-link" href="contact.php">Contact</a>
-        </li>
-      </ul>
-      <ul class="navbar-nav">
-        <li class="nav-item">
-          <a class="nav-link" href="login.php">Login</a>
-        </li>
-        <li class="nav-item">
-          <a class="nav-link" href="registration.php">Register</a>
-        </li>
-      </ul>
+$stmt = "SELECT s_id,b.b_name AS brand_name, c.c_name AS category_name, s.shoe_name, s.gender, s.shoe_sizes, s.product_description, s.product_image, s.price, s.quantity
+         FROM shoe s
+         INNER JOIN brands b ON s.b_id = b.b_id
+         INNER JOIN categories c ON s.c_id = c.c_id";
+$result = mysqli_query($conn, $stmt);
+$numRows = mysqli_num_rows($result);
+?>
+<?php require_once('header.php'); ?>
+<?php require_once('navbar.php'); ?>
+
+
+<?php if (isset($_SESSION['message'])) : ?>
+    <div class='alert alert-success alert-dismissible fade show' role='alert' style='margin-bottom: 0px;'>
+<b><?php echo $_SESSION['message']; ?></b>
+        <button type='button' class='btn-close' data-bs-dismiss='alert' aria-label='Close' onclick='clearMessage()'></button>
     </div>
-  </div>
-</nav>
-
-
-
+    <?php
+    unset($_SESSION['message']);
+    ?>
+<?php endif; ?>
   
 <section class="order-page py-5">
   <div class="container">
@@ -64,29 +38,46 @@
           <thead>
             <tr>
               <th>Brand Name</th>
+              <th>Category Name</th>
               <th>Shoe Name</th>
+              <th>Product Description</th>
               <th>Gender</th>
               <th>Available Sizes</th>
-              <th>Product Description</th>
+              <th>Price</th>
+              <th>Quantity</th>
               <th>Product Image</th>
               <th>Edit</th>
               <th>Delete</th>
             </tr>
           </thead>
           <tbody>
-            <!-- Dummy data for the order details -->
-            <tr>
-              <td>Product 1</td>
-              <td>$29.99</td>
-              <td>2</td>
-              <td>$59.98</td>
-              <td>$59.98</td>
-              <td>$59.98</td>
-              <td><button class="btn btn-primary"> Edit</button></td>
-              <td><button class="btn btn-danger">Delete</button></td>
-            </tr>
-            
-            <!-- Add more rows for other products in the order -->
+          <?php if ($numRows == 0) {
+            // If there are no categories, display the message here
+            echo "<tr><td colspan='9' class='text-center'><h4><b>No Category Available</b></h4></td></tr>";
+        } else {
+          while ($row = mysqli_fetch_assoc($result)) : ?>
+              <tr>
+                <td><?php echo $row['brand_name']; ?></td>
+                <td><?php echo $row['category_name']; ?></td>
+                <td><?php echo $row['shoe_name']; ?></td>
+                <td><?php echo $row['product_description']; ?></td>
+                <td><?php echo $row['gender']; ?></td>
+                <td><?php echo $row['shoe_sizes']; ?></td>
+                <td><?php echo "$".$row['price']; ?></td>
+                <td><?php echo $row['quantity']; ?></td>
+                <td><img src="<?php echo $row['product_image']; ?>" alt="Product Image" width="100"></td>
+
+                <td>
+                  <a href="updateshoes.php?s_id=<?php echo $row['s_id']; ?>" class="btn btn-primary">Edit</a>
+              </td>
+                <td>
+                <a href="deleteshoe.php?s_id=<?php echo $row['s_id']; ?>" class="btn btn-danger">Delete</a>
+              </td>
+              </tr>
+            <?php endwhile; ?>
+            <?php
+                }
+            ?>
           </tbody>
          
         </table>
@@ -96,18 +87,4 @@
 </section>
 
 <!-- Footer Section -->
-<footer class="bg-dark text-white text-center py-5 footer-section">
-    <a href="https://www.facebook.com/" target="_blank"><i class="fa-brands fa-twitter px-3"></i></a>
-    <a href="https://twitter.com/" target="_blank"><i class="fa-brands fa-facebook-f px-3"></i></a>
-    <a href="https://www.instagram.com/" target="_blank"><i class="fa-brands fa-instagram px-3"></i></a>
-    <a href="https://mail.google.com/" target="_blank"><i class="fa-solid fa-envelope px-3"></i></a>
-  <p class="mt-2">&copy; 2023 Shoe Store. All rights reserved.</p>
-</footer>
-
-
-<!-- Link to Bootstrap JS and jQuery (for the Navbar toggle) -->
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-
-</body>
-</html>
+<?php require_once('footer.php'); ?>

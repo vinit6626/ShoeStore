@@ -1,3 +1,15 @@
+<?php
+session_start();
+require_once("db_conn.php");
+    $stmt = "SELECT * FROM brands";
+    $stmt = mysqli_prepare($conn, $stmt);
+    mysqli_stmt_execute($stmt);
+    $result = mysqli_stmt_get_result($stmt);
+    $numRows = mysqli_num_rows($result);
+
+    
+?>
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -15,26 +27,23 @@
 <body>
 
 <?php require_once('navbar.php'); ?>
+<?php if (isset($_SESSION['message'])) : ?>
+    <div class='alert alert-success alert-dismissible fade show' role='alert' style='margin-bottom: 0px;'>
+<b><?php echo $_SESSION['message']; ?></b>
+        <button type='button' class='btn-close' data-bs-dismiss='alert' aria-label='Close' onclick="clearMessage()"></button>
+    </div>
+    <?php
+    unset($_SESSION['message']);
+    ?>
+<?php endif; ?>
 
 
-
-<!-- Welcome Section with Image -->
-<section class="hero-section custom-bg homepage-heading-section">
-  <div class="container text-center homepage-heading-div">
-    <h1 class="text-white">Welcome to Shoe Store</h1>
-    <p class="text-white">Explore our latest collection of stylish shoes for every occasion.</p>
-    
-  </div>
-</section>
-
-
-
-<!-- Order Page -->
+  
 <section class="order-page py-5">
   <div class="container">
     <div class="row">
       <div class="col-md-12">
-        <h2 class="text-center mb-4">Your Order Details</h2>
+        <h2 class="text-center mb-4">Brand Details</h2>
       </div>
     </div>
     <div class="row">
@@ -42,26 +51,37 @@
         <table class="table table-striped">
           <thead>
             <tr>
-              <th>Product Name</th>
-              <th>Price</th>
-              <th>Quantity</th>
-              <th>Subtotal</th>
+              <th>Brand Name</th>
+              <th>Edit</th>
+              <th>Delete</th>
             </tr>
           </thead>
           <tbody>
             <!-- Dummy data for the order details -->
-            <tr>
-              <td>Product 1</td>
-              <td>$29.99</td>
-              <td>2</td>
-              <td>$59.98</td>
+            
+        <?php
+        if ($numRows == 0) {
+            // If there are no categories, display the message here
+            echo "<tr><td colspan='3' class='text-center'><h4><b>No Brand Available</b></h4></td></tr>";
+        } else {
+            // If there are categories, display them in the table
+            while ($row = mysqli_fetch_assoc($result)) {
+        ?>
+           <tr>
+                <td>
+                    <?php echo $row['b_name']; ?>
+                </td>
+                <td>
+                    <a href="updatebrand.php?b_id=<?php echo $row['b_id']; ?>" class="btn btn-primary">Edit</a>
+                </td>
+                <td>
+                    <a href="deletebrand.php?b_id=<?php echo $row['b_id']; ?>" class="btn btn-danger">Delete</a>
+                </td>
             </tr>
-            <tr>
-              <td>Product 2</td>
-              <td>$39.99</td>
-              <td>1</td>
-              <td>$39.99</td>
-            </tr>
+            <?php
+                }
+            }
+            ?>
             <!-- Add more rows for other products in the order -->
           </tbody>
          
@@ -87,3 +107,8 @@
 
 </body>
 </html>
+<script>
+    function clearMessage() {
+        window.location.href = window.location.href;
+    }
+</script>

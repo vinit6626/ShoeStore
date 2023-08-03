@@ -13,59 +13,7 @@
 
 </head>
 <body>
-
-<!-- Navigation Bar -->
-<nav class="navbar navbar-expand-lg bg-dark navbar-dark">
-  <div class="container-fluid">
-    <a class="navbar-brand" href="index.php">Shoe Store</a>
-    <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarText" aria-controls="navbarText" aria-expanded="false" aria-label="Toggle navigation">
-      <span class="navbar-toggler-icon"></span>
-    </button>
-    <div class="collapse navbar-collapse" id="navbarText">
-      <ul class="navbar-nav me-auto mb-2 mb-lg-0">
-        <li class="nav-item">
-          <a class="nav-link" href="index.php">Home</a>
-        </li>
-        <li class="nav-item">
-          <a class="nav-link" href="product.php">Products</a>
-        </li>
-        <li class="nav-item">
-          <a class="nav-link" href="about.php">About</a>
-        </li>
-        <li class="nav-item">
-          <a class="nav-link" href="contact.php">Contact</a>
-        </li>
-      </ul>
-      <ul class="navbar-nav">
-       
-      <?php
-        // Check if the user is logged in
-        session_start();
-        if (isset($_SESSION['username'])) {
-          // User is logged in, show logout button
-          ?>
-          <li class="nav-item">
-            <a class="nav-link" href="logout.php">Logout</a>
-          </li>
-          <?php
-        } else {
-          // User is not logged in, show login button
-          ?>
-          <li class="nav-item">
-            <a class="nav-link" href="login.php">Login</a>
-          </li>
-          <li class="nav-item">
-          <a class="nav-link" href="registration.php">Register</a>
-        </li>
-          <?php
-        }
-        ?>
-        
-      </ul>
-    </div>
-  </div>
-</nav>
-
+<?php require_once('navbar.php'); ?>
 
 
 <!-- Welcome Section with Image -->
@@ -80,7 +28,8 @@
 <?php
   session_start();
   if (isset($_SESSION['username'])) {
-    echo "<h1 class='text-center mt-2'>Welcome, " . $_SESSION['username'] . "!</h1>"; // Show the logged-in user's name
+    echo "<h1 class='text-center mt-2'>Welcome, " . $_SESSION['username'] . "!</h1><h2 class='text-center'>Hello, ". $_SESSION['usertype'] ."</h2>"; 
+    // Show the logged-in user's name
   } else {
     // Redirect back to the login page if not logged in
     header("location: login.php");

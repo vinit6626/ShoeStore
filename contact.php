@@ -1,3 +1,47 @@
+<?php
+error_reporting(E_ALL);
+ini_set('display_errors', 1);
+
+require_once("db_conn.php");
+
+// Initialize error messages array
+$errors = array();
+
+function sanitizeInput($input){
+  $input = str_replace(['(',')','"', ';'], '', $input);
+  $input = strip_tags($input);
+  $input = trim($input);
+  $input = htmlentities($input, ENT_QUOTES, 'UTF-8');
+  return $input;
+}
+// Check if the form is submitted
+if ($_SERVER["REQUEST_METHOD"] === "POST") {
+    // Retrieve form data
+    $name = sanitizeInput($_POST["name"]);
+    $email = sanitizeInput($_POST["email"]);
+    $phone = sanitizeInput($_POST["phone"]);
+    $message = sanitizeInput($_POST["message"]);
+
+    if (empty($errors)) {
+        $stmt = "INSERT INTO contacts (name, email, phone, message) VALUES (?, ?, ?, ?)";
+        $stmt = mysqli_prepare($conn, $stmt);
+        mysqli_stmt_bind_param($stmt, "ssss", $name, $email, $phone, $message);
+
+        $result = mysqli_stmt_execute($stmt);
+        if ($result) {
+            echo "<div class='alert alert-success alert-dismissible fade show' role='alert' style='margin-bottom: 0px;'>Your message sent to ShoeStore admin.<button type='button' class='btn-close' data-bs-dismiss='alert' aria-label='Close'></button></div>";
+            // header("location: contact.php");
+            // exit;
+        } else {
+            // echo "Error: " . $stmt->error;
+            echo "<div class='alert alert-danger' role='alert' style='margin-bottom: 0px;'>Database error.</div>";
+            // header("location: contact.php");
+        }
+        mysqli_stmt_close($stmt);
+    }
+}
+?>
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -14,39 +58,7 @@
 </head>
 <body>
 
-<!-- Navigation Bar -->
-<nav class="navbar navbar-expand-lg bg-dark navbar-dark">
-  <div class="container-fluid">
-    <a class="navbar-brand" href="index.php">Shoe Store</a>
-    <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarText" aria-controls="navbarText" aria-expanded="false" aria-label="Toggle navigation">
-      <span class="navbar-toggler-icon"></span>
-    </button>
-    <div class="collapse navbar-collapse" id="navbarText">
-      <ul class="navbar-nav me-auto mb-2 mb-lg-0">
-        <li class="nav-item">
-          <a class="nav-link" href="index.php">Home</a>
-        </li>
-        <li class="nav-item">
-          <a class="nav-link" href="product.php">Products</a>
-        </li>
-        <li class="nav-item">
-          <a class="nav-link" href="about.php">About</a>
-        </li>
-        <li class="nav-item">
-          <a class="nav-link" href="contact.php">Contact</a>
-        </li>
-      </ul>
-      <ul class="navbar-nav">
-        <li class="nav-item">
-          <a class="nav-link" href="login.php">Login</a>
-        </li>
-        <li class="nav-item">
-          <a class="nav-link" href="registration.php">Register</a>
-        </li>
-      </ul>
-    </div>
-  </div>
-</nav>
+<?php require_once('navbar.php'); ?>
 
 
 
@@ -179,22 +191,27 @@
     <div class="row justify-content-center">
       <div class="col-md-6">
         <h2 class="text-center mb-4">Contact Us</h2>
-        <form>
+        <form method="POST" action="<?php echo $_SERVER['PHP_SELF'];?>" id="contact-form">
           <div class="mb-3">
             <label for="name" class="form-label">Name</label>
             <input type="text" class="form-control" id="name" name="name" placeholder="Name">
+            <span class="text-danger" id="name-error"><?php echo isset($errors['name']) ? $errors['name'] : ''; ?></span>
           </div>
           <div class="mb-3">
             <label for="email" class="form-label">Email</label>
-            <input type="email" class="form-control" id="email" name="email" placeholder="Email">
+            <input type="text" class="form-control" id="email" name="email" placeholder="Email">
+            <span class="text-danger" id="email-error"><?php echo isset($errors['email']) ? $errors['email'] : ''; ?></span>
           </div>
           <div class="mb-3">
             <label for="phone" class="form-label">Phone Number</label>
             <input type="tel" class="form-control" id="phone" name="phone" placeholder="Phone">
+            <span class="text-danger" id="phone-error"><?php echo isset($errors['phone']) ? $errors['phone'] : ''; ?></span>
           </div>
           <div class="mb-3">
             <label for="message" class="form-label">Message</label>
             <textarea class="form-control" id="message" name="message" rows="5" placeholder="Message"></textarea>
+            <span id="char-count" style="float: right;">0/200</span>
+            <span class="text-danger" id="message-error"><?php echo isset($errors['message']) ? $errors['message'] : ''; ?></span>
           </div>
           <div class="text-center">
             <button type="submit" class="btn btn-primary">Submit</button>
@@ -222,3 +239,88 @@
 
 </body>
 </html>
+
+<!-- JavaScript Section -->
+<script>
+  const form = document.getElementById("contact-form");
+
+  form.addEventListener("submit", function(event) {
+    event.preventDefault(); // Prevent form submission to check validation
+
+    // Validate the form fields
+    const isValid = validateForm();
+
+    // If all fields are valid, submit the form
+    if (isValid) {
+      form.submit();
+    }
+  });
+
+  function validateForm() {
+    let isValid = true;
+    const name = document.getElementById("name").value.trim();
+    const email = document.getElementById("email").value.trim();
+    const phone = document.getElementById("phone").value.trim();
+    const message = document.getElementById("message").value.trim();
+
+    // Clear previous error messages
+    document.getElementById("name-error").textContent = "";
+    document.getElementById("email-error").textContent = "";
+    document.getElementById("phone-error").textContent = "";
+    document.getElementById("message-error").textContent = "";
+
+    // Validate name
+    if (name === "") {
+      document.getElementById("name-error").textContent = "Name is required.";
+      isValid = false;
+    }
+
+    // Validate email
+    if (email === "") {
+      document.getElementById("email-error").textContent = "Email is required.";
+      isValid = false;
+    } else if (!emailIsValid(email)) {
+      document.getElementById("email-error").textContent = "Invalid email format.";
+      isValid = false;
+    }
+
+    // Validate phone
+    if (phone === "") {
+      document.getElementById("phone-error").textContent = "Phone number is required.";
+      isValid = false;
+    }else if (!phoneIsValid(phone)) {
+      document.getElementById("phone-error").textContent = "Phone number should be 10 digit only.";
+      isValid = false;
+    }
+
+     // Validate message
+     if (message === "") {
+      document.getElementById("message-error").textContent = "Message is required.";
+      isValid = false;
+    }
+    return isValid;
+  }
+  function emailIsValid(email) {
+    return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+  }
+  function phoneIsValid(phone) {
+  const numericPhone = phone.replace(/\D/g, '');
+  return /^\d{10}$/.test(numericPhone);
+}
+
+</script>
+
+<script>
+    // Add an event listener to the textarea for input events
+    const messageInput = document.getElementById("message");
+    messageInput.addEventListener("input", updateCharCount);
+
+    function updateCharCount() {
+      const message = messageInput.value;
+      const charCountSpan = document.getElementById("char-count");
+      const charCount = message.length;
+      
+      // Update the character count display
+      charCountSpan.textContent = charCount + "/200";
+    }
+  </script>
