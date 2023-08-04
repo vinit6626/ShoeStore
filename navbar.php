@@ -41,6 +41,9 @@
         <li class="nav-item">
           <a class="nav-link" href="product.php">Products</a>
         </li>
+        <li class="nav-item">
+          <a class="nav-link" href="cart.php">Cart</a>
+        </li>
         <?php } }?>
 
         <li class="nav-item">

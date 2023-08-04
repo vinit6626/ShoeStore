@@ -22,9 +22,71 @@ if (isset($_GET['s_id'])) {
     echo "No shoe found with the provided ID.";
   }
 }
+if ($_SERVER["REQUEST_METHOD"] === "POST") {
+
+ 
+  if (isset($_POST['s_id']) && isset($_POST['size']) && isset($_POST['quantity'])) {
+    $shoeId = $_POST['s_id'];
+    $size = $_POST['size'];
+    $quantity = $_POST['quantity'];
+    $account_id = $_POST['account_id'];
+
+    // Insert the data into the cart table
+    $insertQuery = "INSERT INTO cart (account_id, s_id, size, quantity) VALUES (?, ?, ?, ?)";
+    $stmt = mysqli_prepare($conn, $insertQuery);
+    mysqli_stmt_bind_param($stmt, "iisi", $account_id, $shoeId, $size, $quantity);
+
+    if (mysqli_stmt_execute($stmt)) {
+      // Insertion successful, redirect to cart.php
+      header("Location: cart.php");
+      exit;
+    } else {
+      // Insertion failed
+      echo "Failed to add item to cart. Please try again later.";
+    }
+  } else {
+    echo "Invalid data. Please provide all required information.";
+  }
+}
+
+
+
 ?>
 
 <?php require_once('header.php'); ?>
+<style>
+ 
+
+  .quantity-container span {
+    cursor: pointer;
+    padding: 5px 10px;
+  }
+
+  .minus-btn {
+    border-radius: 4px 0 0 4px;
+  }
+
+  .plus-btn {
+    border-radius: 0 4px 4px 0;
+  }
+  input[type="number"] {
+    -moz-appearance: textfield;
+    appearance: textfield;
+    margin: 0;
+    padding: 0;
+    text-align: center;
+    width: 12%;
+  }
+
+  /* Hide the number input arrows */
+  input[type="number"]::-webkit-inner-spin-button,
+  input[type="number"]::-webkit-outer-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+  }
+
+</style>
+
 <?php require_once('navbar.php'); ?>
 
 <!-- Welcome Section with Image -->
@@ -38,9 +100,11 @@ if (isset($_GET['s_id'])) {
 
 <!-- Item Page -->
 <section class="item-page py-5">
-
-<h2 class="text-center"><b><?php echo $shoeData['brand_name']; ?></b></h2>
-<h4 class="text-center mb-5"><?php echo $shoeData['category_name']; ?></h4>
+<form method="post" action="<?php echo $_SERVER['PHP_SELF']; ?>">
+<input type="hidden" name="account_id" value="<?php echo $_SESSION['user_id']; ?>" >
+<input type="hidden" name="s_id" value="<?php echo $shoeData['s_id']; ?>" >
+  <h2 class="text-center"><b><?php echo $shoeData['brand_name']; ?></b></h2>
+  <h4 class="text-center mb-5"><?php echo $shoeData['category_name']; ?></h4>
   <div class="container">
     <div class="row justify-content-center">
       <div class="col-md-4 text-center">
@@ -52,15 +116,30 @@ if (isset($_GET['s_id'])) {
         <p class="text-center">Price: $<?php echo $shoeData['price']; ?></p>
         <div class="text-center width60 mb-3"> 
             <label for="sizeSelect">Select size:</label>
-            <select id="sizeSelect" class="form-select d-inline-block">
+            <select id="sizeSelect" name="size" class="form-select d-inline-block">
                 <?php foreach ($shoeSizesArray as $size): ?>
                     <option value="<?php echo $size; ?>"><?php echo $size; ?></option>
                 <?php endforeach; ?>
             </select>
         </div>
+        <!-- Quantity -->
+        <div class="text-center mb-3">
+  <label class="form-label">Quantity:</label>
+  <div class="input-group quantity-container d-inline-flex align-items-center justify-content-center">
+    <span class="minus-btn btn btn-sm btn-secondary" onclick="decrementQuantity(<?php echo $shoesId; ?>)">-</span>
+    <input type="number" id="quantity-<?php echo $shoesId; ?>" class="quantity-label mx-2" name="quantity" value="1" readonly>
+    <span class="plus-btn btn btn-sm btn-secondary" onclick="incrementQuantity(<?php echo $shoesId; ?>, <?php echo $shoeData['quantity']; ?>)">+</span>
+  </div>
+</div>
+
+
+        <!-- Hidden input fields to store selected values -->
+        <input type="hidden" id="s_id" name="s_id" value="<?php echo $shoeData['s_id']; ?>">
+
         <div class="text-center">
-          <button class="btn btn-primary mb-3">Add to Cart</button>
+          <input type="submit" class="btn btn-primary mb-3" onclick="addToCart()" value="Add to Cart"/>
         </div>
+      </form>
         <div>
           <h3 class="text-center">Description</h3>
           <p class="text-center"> <?php echo $shoeData['product_description']; ?></p>
@@ -84,3 +163,28 @@ if (isset($_GET['s_id'])) {
   </div>
 </section>
 <?php require_once('footer.php'); ?>
+
+
+<script>
+  function incrementQuantity(productId, maxQuantity) {
+    const quantityInput = document.getElementById(`quantity-${productId}`);
+    let quantity = parseInt(quantityInput.value);
+
+    // Check if the quantity is less than the maximum available quantity
+    if (quantity < maxQuantity) {
+      quantity++;
+      quantityInput.value = quantity.toString();
+    }
+  }
+
+  function decrementQuantity(productId) {
+    const quantityInput = document.getElementById(`quantity-${productId}`);
+    let quantity = parseInt(quantityInput.value);
+
+    // Ensure quantity is greater than 1 before decrementing
+    if (quantity > 1) {
+      quantity--;
+      quantityInput.value = quantity.toString();
+    }
+  }
+</script>

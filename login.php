@@ -22,7 +22,7 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
         exit;
     }
     
-    $stmt = "SELECT password, user_type FROM account WHERE username = ?";
+    $stmt = "SELECT password, user_type, account_id FROM account WHERE username = ?";
     $stmt = mysqli_prepare($conn, $stmt);
     mysqli_stmt_bind_param($stmt, "s", $username);
     mysqli_stmt_execute($stmt);
@@ -31,9 +31,12 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
     mysqli_stmt_close($stmt);
 
     if ($row && password_verify($password, $row['password'])) {
+      
         $_SESSION['username'] = $username;
         $_SESSION['usertype'] = $row['user_type'];
-
+        $_SESSION['user_id'] = $row['account_id'];
+        
+       
         if ($_SESSION['usertype'] === "Admin") {
             header("location: home.php"); 
         } elseif ($_SESSION['usertype'] === "User") {
