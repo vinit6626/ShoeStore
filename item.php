@@ -114,6 +114,7 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
         <h2 class="text-center"><?php echo $shoeData['shoe_name']; ?></h2>
         <p class="text-center">Gender: <?php echo $shoeData['gender']; ?></p>
         <p class="text-center">Price: $<?php echo $shoeData['price']; ?></p>
+        <?php if ($shoeData['quantity'] > 0) { ?>
         <div class="text-center width60 mb-3"> 
             <label for="sizeSelect">Select size:</label>
             <select id="sizeSelect" name="size" class="form-select d-inline-block">
@@ -132,7 +133,6 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
   </div>
 </div>
 
-
         <!-- Hidden input fields to store selected values -->
         <input type="hidden" id="s_id" name="s_id" value="<?php echo $shoeData['s_id']; ?>">
 
@@ -140,6 +140,9 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
           <input type="submit" class="btn btn-primary mb-3" onclick="addToCart()" value="Add to Cart"/>
         </div>
       </form>
+      <?php }else{ ?>
+  <h4 class="text-center text-danger" > This product is out of stock</h4>
+  <?php } ?>
         <div>
           <h3 class="text-center">Description</h3>
           <p class="text-center"> <?php echo $shoeData['product_description']; ?></p>

@@ -1,6 +1,4 @@
 <?php
-
-
 session_start();
 require_once("db_conn.php");
 
@@ -35,11 +33,14 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
         $_SESSION['username'] = $username;
         $_SESSION['usertype'] = $row['user_type'];
         $_SESSION['user_id'] = $row['account_id'];
-        
+        setcookie('username', $username, time() + (86400), '/');
        
         if ($_SESSION['usertype'] === "Admin") {
+          
             header("location: home.php"); 
         } elseif ($_SESSION['usertype'] === "User") {
+        setcookie('brand', 'Nike', time() + (86400), '/');
+
             header("location: home.php"); 
         } else {
           header("location: login.php"); 

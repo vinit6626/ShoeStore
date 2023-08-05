@@ -1,19 +1,14 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <link rel="icon" type="image/x-icon" href="./images/favicon.png">
-  <title>Shoe Store</title>
-  <!-- Link to Bootstrap CSS -->
-  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
-  <link rel="stylesheet" href="./css/style.css">
-  
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+<?php
 
-</head>
-<body>
+require_once("db_conn.php");
+session_start();
+$account_id = $_SESSION['user_id'];
+$query = "SELECT o.shoe_name, o.size, o.quantity, o.total, o.order_date, s.product_image FROM orders o JOIN shoe s ON o.s_id = s.s_id WHERE account_id = $account_id ORDER BY o.o_id DESC";
+$result = mysqli_query($conn, $query);
+$row_count = mysqli_num_rows($result);
+?>
 
+<?php require_once('header.php'); ?>
 <?php require_once('navbar.php'); ?>
 
 
@@ -31,59 +26,58 @@
 
 <!-- Order Page -->
 <section class="order-page py-5">
+<?php if($row_count > 0) { ?>
   <div class="container">
     <div class="row">
       <div class="col-md-12">
         <h2 class="text-center mb-4">Your Order Details</h2>
       </div>
     </div>
+
+    <div class="text-center mb-5 mt-2">
+    <a class="btn btn-success " target="_blank" href="pdfg.php">Download Your Latest Invoice</a>
+    </div>
+
     <div class="row">
       <div class="col-md-12">
         <table class="table table-striped">
           <thead>
             <tr>
-              <th>Product Name</th>
-              <th>Price</th>
+              <th>Shoe Image</th>
+              <th>Shoe Name</th>
+              <th>Size</th>
               <th>Quantity</th>
               <th>Subtotal</th>
+              <th>Date of Order</th>
             </tr>
           </thead>
           <tbody>
             <!-- Dummy data for the order details -->
-            <tr>
-              <td>Product 1</td>
-              <td>$29.99</td>
-              <td>2</td>
-              <td>$59.98</td>
-            </tr>
-            <tr>
-              <td>Product 2</td>
-              <td>$39.99</td>
-              <td>1</td>
-              <td>$39.99</td>
-            </tr>
+            <?php 
+            while ($row = mysqli_fetch_assoc($result)) {
+              echo '<tr>';
+              echo '<td><img src="' . $row['product_image'] . '" alt="Shoe Image" width="50"></td>';
+              echo '<td>' . $row['shoe_name'] . '</td>';
+              echo '<td>' . $row['size'] . '</td>';
+              echo '<td>' . $row['quantity'] . '</td>';
+              echo '<td>$' . $row['total'] . '</td>';
+              echo '<td>' . $row['order_date'] . '</td>';
+              echo '</tr>';
+            }
+
+            ?>
             <!-- Add more rows for other products in the order -->
           </tbody>
-         
+            
         </table>
       </div>
     </div>
+    <?php } else { ?>
+      <h2 class="text-center" > You haven't order anything yet! </h2>
+  
   </div>
+  <?php } ?>
 </section>
 
-<!-- Footer Section -->
-<footer class="bg-dark text-white text-center py-5 footer-section">
-    <a href="https://www.facebook.com/" target="_blank"><i class="fa-brands fa-twitter px-3"></i></a>
-    <a href="https://twitter.com/" target="_blank"><i class="fa-brands fa-facebook-f px-3"></i></a>
-    <a href="https://www.instagram.com/" target="_blank"><i class="fa-brands fa-instagram px-3"></i></a>
-    <a href="https://mail.google.com/" target="_blank"><i class="fa-solid fa-envelope px-3"></i></a>
-  <p class="mt-2">&copy; 2023 Shoe Store. All rights reserved.</p>
-</footer>
+<?php require_once('footer.php'); ?>
 
-
-<!-- Link to Bootstrap JS and jQuery (for the Navbar toggle) -->
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-
-</body>
-</html>

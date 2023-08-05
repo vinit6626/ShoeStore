@@ -11,6 +11,8 @@ function sanitizeInput($input){
     $input = strip_tags($input);
     $input = trim($input);
     $input = htmlentities($input, ENT_QUOTES, 'UTF-8');
+    $input = htmlspecialchars($input);
+
     return $input;
 }
 

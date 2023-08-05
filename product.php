@@ -1,12 +1,25 @@
 <?php
 require_once("db_conn.php");
+if (isset($_COOKIE['brand'])) {
+  $brand = $_COOKIE['brand'];
+  $stmt = $conn->prepare("SELECT s.s_id, s.shoe_name, s.product_image, s.shoe_sizes, s.gender, s.price, s.quantity, b.b_name as brand_name
+       FROM shoe s
+       INNER JOIN brands b ON s.b_id = b.b_id
+       WHERE s.quantity > 0 AND b.b_name = ?");
+  $stmt->bind_param("s", $brand);
+}else{
+  $stmt = $conn->prepare("SELECT s.s_id, s.shoe_name, s.product_image, s.shoe_sizes, s.gender, s.price, s.quantity, b.b_name as brand_name
+  FROM shoe s
+  INNER JOIN brands b ON s.b_id = b.b_id
+  WHERE s.quantity > 0");
+}
 
-$stmt = "SELECT s.s_id, s.shoe_name, s.product_image, s.shoe_sizes, s.gender, s.price, b.b_name as brand_name
-         FROM shoe s
-         INNER JOIN brands b ON s.b_id = b.b_id";
 
-$result = mysqli_query($conn, $stmt);
-$products = mysqli_fetch_all($result, MYSQLI_ASSOC);
+$stmt->execute();
+
+$result = $stmt->get_result();
+
+$products = $result->fetch_all(MYSQLI_ASSOC);
 
 ?>
 

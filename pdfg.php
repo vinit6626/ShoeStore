@@ -1,90 +1,96 @@
 <?php
 // include connection file 
+error_reporting(E_ALL);
+ini_set('display_errors', '1');
+
 require_once("db_conn.php");
+session_start();
 
 require('fpdf184/fpdf.php');
 
-
 class PDF extends FPDF
 {
-   // Page header
-function Header()
-{
-    
-    // Logo
+    // Page header
+    function Header()
+    {
 
-	$this->Image('logo/conestogalogo.png',95,10,20);
+	$this->Image('logo/ShoeStore.png', 80, 5, 60);
 	$this->Ln(10);
     $this->SetFont('Arial','B',13);
-    // Move to the right
     $this->Cell(80);
-    // Title
-    $this->Cell(30,20,'Solo Squad',0,0,'C');
 	$this->Ln(10);
-    $this->Cell(190,20,'Clothing Store',0,0,'C');
 
-    // Line break
-    $this->Ln(30);
+    $this->Ln(40);
+    }
 
+    // Page footer
+    function Footer()
+    {
+        // Position at 1.5 cm from bottom
+        $this->SetY(-15);
+        // Arial italic 8
+        $this->SetFont('Arial', 'I', 8);
+        // Page number
+        $this->Cell(0, 10, 'Vinit Mohanbhai Dabhi - 8804874', 0, 0, 'C');
+    }
 }
 
-// Page footer
-function Footer()
-{
-    // Position at 1.5 cm from bottom
-    $this->SetY(-15);
-    // Arial italic 8
-    $this->SetFont('Arial','I',8);
-    // Page number
-    $this->Cell(0,10,'Vinit Mohanbhai Dabhi - 8804874',0,0,'C');
-}
-
-}
- // Initialize PDF object
+// Initialize PDF object
 ob_clean();
-
+$totalAmount = 0;
 $pdf = new PDF();
 $pdf->AddPage();
-$result = mysqli_query($conn, "SELECT UserName, COUNT(*) AS OrderCount FROM OrderDetails GROUP BY UserName ORDER BY OrderCount DESC LIMIT 3 ");
-$pdf->SetFont('Arial', 'B', 16);
-$pdf->Cell(0, 10, 'Top 3 Users by Order Count', 0, 1, 'C');
+$account_id = $_SESSION['user_id'];
+$result = mysqli_query($conn, "SELECT o.o_id, o.account_id, o.s_id, o.full_Name, o.address, o.zip_code, o.province, o.cardname, o.card_number, o.expiry, o.size, o.shoe_name, o.quantity, o.total, o.order_date, s.price FROM orders o JOIN shoe s ON o.s_id = s.s_id WHERE o.account_id = $account_id AND o.order_date = ( SELECT MAX(order_date) FROM orders WHERE account_id = $account_id );");
+if (mysqli_num_rows($result) > 0) {
+    $row = mysqli_fetch_assoc($result);
 
-$pdf->SetFont('Arial', 'B', 12);
-$tableWidth = 120;
-
-
-// Get current position
-$currentY = $pdf->GetY();
-$currentX = $pdf->GetX();
-
-// Calculate table height
-$tableHeight = 10 * mysqli_num_rows($result);
-
-// Calculate center position
-$pageWidth = $pdf->GetPageWidth();
-$pageHeight = $pdf->GetPageHeight();
-$leftMargin = ($pageWidth - $tableWidth) / 2;
-$topMargin = ($pageHeight - $tableHeight) / 2;
-
-// Set left and top margins
-$pdf->SetLeftMargin($leftMargin);
-$pdf->SetTopMargin($topMargin);
-$pdf->Cell($tableWidth/2, 10, 'User Name', 1, 0, 'C');
-$pdf->Cell($tableWidth/2, 10, 'Total Order', 1, 1, 'C');
-
-// Output table
-while ($row = mysqli_fetch_assoc($result)) {
     $pdf->SetFont('Arial', '', 12);
-    $pdf->Cell($tableWidth/2, 10, $row['UserName'], 1, 0, 'C');
-    $pdf->Cell($tableWidth/2, 10, $row['OrderCount'], 1, 1, 'C');
+    $pdf->Cell(60, 10, 'Full Name: ' . $row['full_Name'], 0, 1);
+    $pdf->Cell(60, 10, 'Address: ' . $row['address'], 0, 1);
+    $pdf->Cell(60, 10, 'Zip Code: ' . $row['zip_code'], 0, 1);
+    $pdf->Cell(60, 10, 'Province: ' . $row['province'], 0, 1);
+    $pdf->Cell(60, 10, 'Card Number: ' . $row['card_number'], 0, 1);
+    $pdf->Cell(60, 10, 'Card Name: ' . $row['cardname'], 0, 1);
+    $pdf->Cell(60, 10, 'Order Number: ' . $row['o_id'], 0, 1);
+    $pdf->Cell(60, 10, 'Order Date: ' . $row['order_date'], 0, 1);
+
+    $pdf->Cell(0, 10, '-----------------------------------------------------------------------------------------------------------------------------------------', 0, 1, 'C');
+    $pdf->Cell(60, 10, 'Shoe Name', 0, 0);
+    $pdf->Cell(40, 10, 'Size', 0, 0);
+    $pdf->Cell(40, 10, 'Quantity', 0, 0);
+    $pdf->Cell(40, 10, 'Each Price', 0, 0);
+    $pdf->Cell(50, 10, 'Total', 0, 1);
+    $pdf->Cell(0, 10, '-----------------------------------------------------------------------------------------------------------------------------------------', 0, 1, 'C');
+
+    $pdf->Cell(60, 10, $row['shoe_name'], 0, 0);
+    $pdf->Cell(40, 10, $row['size'], 0, 0);
+    $pdf->Cell(40, 10, $row['quantity'], 0, 0);
+    $pdf->Cell(40, 10, '$'. $row['price'], 0, 0);
+    $pdf->Cell(50, 10, '$' . $row['total'], 0, 1);
+
+    // Loop through the rest of the rows to display the items
+    $totalAmount += $row['total'];
+    while ($row = mysqli_fetch_assoc($result)) {
+        $pdf->SetFont('Arial', '', 12);
+        $pdf->Cell(60, 10, $row['shoe_name'], 0, 0);
+        $pdf->Cell(40, 10, $row['size'], 0, 0);
+        $pdf->Cell(40, 10, $row['quantity'], 0, 0);
+        $pdf->Cell(40, 10, '$'. $row['price'], 0, 0);
+        $pdf->Cell(50, 10, '$' . $row['total'], 0, 1);
+
+        $totalAmount += $row['total'];
+    }
+
+    $pdf->Cell(0, 10, '-----------------------------------------------------------------------------------------------------------------------------------------', 0, 1, 'C');
+    $pdf->Cell(190, 10, 'Overall Total: $' . $totalAmount, 0, 1, 'R');
+
+    $pdf->Cell(160, 40, 'This is computer generated invoice you do not need to sign or verify.', 0, 1, 'R');
+    
+    // Output PDF
+    $pdf->Output();
+} else {
+    // Handle the case when no rows are returned
+    echo "No data found for the user.";
 }
-
-// Reset left and top margins
-$pdf->SetLeftMargin($currentX);
-$pdf->SetTopMargin($currentY);
-
-// Output PDF
-$pdf->Output();
-
-
 ?>

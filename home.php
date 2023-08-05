@@ -28,7 +28,16 @@
 <?php
   session_start();
   if (isset($_SESSION['username'])) {
-    echo "<h1 class='text-center mt-2'>Welcome, " . $_SESSION['username'] . "!</h1><h2 class='text-center'>Hello, ". $_SESSION['usertype'] ."</h2>"; 
+    // echo "<h1 class='text-center mt-2'>Welcome, " . $_SESSION['username'] . "!</h1><h2 class='text-center'>Hello, ". $_SESSION['usertype'] ."</h2>"; 
+
+    if (isset($_COOKIE['username'])) {
+      $username = $_COOKIE['username'];
+      echo "<h1 class='text-center mt-2'>Welcome, " . $username . "!</h1><h2 class='text-center'>Hello, ". $_SESSION['usertype'] ."</h2>"; 
+
+    } else {
+      echo "<h2 class='text-center'>Hello, ". $_SESSION['usertype'] ."</h2>"; 
+     
+  }
     // Show the logged-in user's name
   } else {
     // Redirect back to the login page if not logged in

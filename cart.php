@@ -1,7 +1,4 @@
 <?php
-
-// ini_set('display_errors', 1);
-// ini_set('display_startup_errors', 1);
 session_start();
 include "invoicePDF.php";
 require_once("db_conn.php");
@@ -81,10 +78,7 @@ $expiry = $_POST["expiry"];
   }
  
   if($processCompleted == 1 && $deleteCompelted == 1){
-    // require_once("invoicePDF.php");
-    // $orderID = 1;
-    // generateInvoice($orderID);
-    header("location: product.php");
+    header("location: myorder.php");
   }
   echo "<pre>";
   print_r($_POST);
@@ -195,14 +189,7 @@ if (isset($_SESSION['user_id'])) {
     <div class="text-center" >
         <h4  class="float-right" >Your Total: $<?php echo number_format($totalCartValue, 2); ?></h4>
     </div>
-<?php else : ?>
-    <!-- Display a message if the cart is empty -->
-    <div class="card mb-5">
-        <div class="card-body">
-            <p class="text-center mb-0">Your cart is empty.</p>
-        </div>
-    </div>
-<?php endif; ?>
+
 
 <!-- shipping detail form -->
                                 
@@ -308,6 +295,14 @@ if (isset($_SESSION['user_id'])) {
                     </div>
                   </div>
                 </form>
+                <?php else : ?>
+    <!-- Display a message if the cart is empty -->
+    <div class="card mb-5">
+        <div class="card-body">
+            <p class="text-center mb-0">Your cart is empty.</p>
+        </div>
+    </div>
+<?php endif; ?>
     </section>
 
 
