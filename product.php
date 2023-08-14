@@ -1,5 +1,9 @@
 <?php
 require_once("db_conn.php");
+session_start();
+
+if (isset($_SESSION['username'])) {
+
 if (isset($_COOKIE['brand'])) {
   $brand = $_COOKIE['brand'];
   $stmt = $conn->prepare("SELECT s.s_id, s.shoe_name, s.product_image, s.shoe_sizes, s.gender, s.price, s.quantity, b.b_name as brand_name
@@ -20,6 +24,12 @@ $stmt->execute();
 $result = $stmt->get_result();
 
 $products = $result->fetch_all(MYSQLI_ASSOC);
+}
+else {
+    // Redirect back to the login page if not logged in
+    header("location: login.php");
+    exit;
+  }
 
 ?>
 

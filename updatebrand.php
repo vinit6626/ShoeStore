@@ -1,7 +1,17 @@
 <?php
+session_start();
 require_once("db_conn.php");
 
 // Check if the form is submitted for updating the category
+if (isset($_SESSION['username'])) {
+    function sanitizeInput($input){
+        $input = str_replace(['(',')','"', ';'], '', $input);
+        $input = strip_tags($input);
+        $input = trim($input);
+        $input = htmlentities($input, ENT_QUOTES, 'UTF-8');
+        $input = htmlspecialchars($input);
+        return $input;
+    }
 if ($_SERVER["REQUEST_METHOD"] === "POST") {
     // Retrieve form data
     $newBrandName = sanitizeInput($_POST["brandName"]);
@@ -40,13 +50,7 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
     }
 }
 
-function sanitizeInput($input){
-    $input = str_replace(['(',')','"', ';'], '', $input);
-    $input = strip_tags($input);
-    $input = trim($input);
-    $input = htmlentities($input, ENT_QUOTES, 'UTF-8');
-    return $input;
-}
+
 
 // Get the category details from the database to pre-fill the form
 if (isset($_GET['b_id'])) {
@@ -59,6 +63,12 @@ if (isset($_GET['b_id'])) {
     $brandData = mysqli_fetch_assoc($result);
     mysqli_stmt_close($stmt);
 }
+}
+else {
+    // Redirect back to the login page if not logged in
+    header("location: login.php");
+    exit;
+  }
 ?>
 
 <!DOCTYPE html>

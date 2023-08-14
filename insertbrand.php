@@ -2,7 +2,16 @@
 session_start();
 
 require_once("db_conn.php");
-
+if (isset($_SESSION['username'])) {
+    function sanitizeInput($input){
+        $input = str_replace(['(',')','"', ';'], '', $input);
+        $input = strip_tags($input);
+        $input = trim($input);
+        $input = htmlentities($input, ENT_QUOTES, 'UTF-8');
+        $input = htmlspecialchars($input);
+    
+        return $input;
+    }
 if ($_SERVER["REQUEST_METHOD"] === "POST") {
     // Initialize error messages array
     $errors = array();
@@ -38,15 +47,13 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
 }
 
 // Function to sanitize input (similar to your existing function)
-function sanitizeInput($input){
-    $input = str_replace(['(',')','"', ';'], '', $input);
-    $input = strip_tags($input);
-    $input = trim($input);
-    $input = htmlentities($input, ENT_QUOTES, 'UTF-8');
-    $input = htmlspecialchars($input);
 
-    return $input;
-}
+}else {
+    // Redirect back to the login page if not logged in
+    header("location: login.php");
+    exit;
+  }
+
 ?>
 
 

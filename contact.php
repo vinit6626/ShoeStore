@@ -12,6 +12,7 @@ function sanitizeInput($input){
   $input = strip_tags($input);
   $input = trim($input);
   $input = htmlentities($input, ENT_QUOTES, 'UTF-8');
+  $input = htmlspecialchars($input);
   return $input;
 }
 // Check if the form is submitted
@@ -23,7 +24,7 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
     $message = sanitizeInput($_POST["message"]);
 
     if (empty($errors)) {
-        $stmt = "INSERT INTO contacts (name, email, phone, message) VALUES (?, ?, ?, ?)";
+        $stmt = "INSERT INTO contact_us (name, email, phone, message) VALUES (?, ?, ?, ?)";
         $stmt = mysqli_prepare($conn, $stmt);
         mysqli_stmt_bind_param($stmt, "ssss", $name, $email, $phone, $message);
 
@@ -209,7 +210,7 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
           </div>
           <div class="mb-3">
             <label for="message" class="form-label">Message</label>
-            <textarea class="form-control" id="message" name="message" rows="5" placeholder="Message"></textarea>
+            <textarea class="form-control" id="message" name="message" rows="5" placeholder="Message" maxlength="200"></textarea>
             <span id="char-count" style="float: right;">0/200</span>
             <span class="text-danger" id="message-error"><?php echo isset($errors['message']) ? $errors['message'] : ''; ?></span>
           </div>

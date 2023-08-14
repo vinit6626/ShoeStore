@@ -2,7 +2,20 @@
 session_start();
 require_once("db_conn.php");
 
+// error_reporting(E_ALL);
+// ini_set('display_errors', 1);
+
 // Check if the form is submitted for updating the category
+if (isset($_SESSION['username'])) {
+
+    function sanitizeInput($input){
+        $input = str_replace(['(',')','"', ';'], '', $input);
+        $input = strip_tags($input);
+        $input = trim($input);
+        $input = htmlentities($input, ENT_QUOTES, 'UTF-8');
+        $input = htmlspecialchars($input);
+        return $input;
+    }
 if ($_SERVER["REQUEST_METHOD"] === "POST") {
     // Retrieve form data
     $newCategoryName = sanitizeInput($_POST["categoryName"]);
@@ -40,13 +53,6 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
 }
 }
 
-function sanitizeInput($input){
-    $input = str_replace(['(',')','"', ';'], '', $input);
-    $input = strip_tags($input);
-    $input = trim($input);
-    $input = htmlentities($input, ENT_QUOTES, 'UTF-8');
-    return $input;
-}
 
 // Get the category details from the database to pre-fill the form
 if (isset($_GET['c_id'])) {
@@ -59,6 +65,12 @@ if (isset($_GET['c_id'])) {
     $categoryData = mysqli_fetch_assoc($result);
     mysqli_stmt_close($stmt);
 }
+}
+else {
+    // Redirect back to the login page if not logged in
+    header("location: login.php");
+    exit;
+  }
 ?>
 
 <!DOCTYPE html>
@@ -91,11 +103,8 @@ if (isset($_GET['c_id'])) {
         </form>
     </div>
 
-<!-- Footer Section -->
-<footer class="bg-dark text-white text-center py-5 footer-section">
-    <!-- ... (footer social media links and copyright info) ... -->
-</footer>
 
+    <?php require_once('footer.php'); ?>
 <!-- Link to Bootstrap JS and jQuery (for the Navbar toggle) -->
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>

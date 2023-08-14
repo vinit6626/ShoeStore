@@ -6,6 +6,7 @@ error_reporting(E_ALL);
 session_start();
 require_once("db_conn.php");
 
+if (isset($_SESSION['username'])) {
 function sanitizeInput($input){
     $input = str_replace(['(',')','"', ';'], '', $input);
     $input = strip_tags($input);
@@ -122,6 +123,12 @@ $brands = mysqli_fetch_all($result, MYSQLI_ASSOC);
 $stmt = "SELECT c_id, c_name FROM categories";
 $result = mysqli_query($conn, $stmt);
 $categories = mysqli_fetch_all($result, MYSQLI_ASSOC);
+}
+else {
+    // Redirect back to the login page if not logged in
+    header("location: login.php");
+    exit;
+  }
 
 ?>
 <!DOCTYPE html>
@@ -278,7 +285,7 @@ $categories = mysqli_fetch_all($result, MYSQLI_ASSOC);
     <button type="submit" class="btn btn-primary">Submit</button>
 </form>
 
-  </div>
+</div>
 
 
 

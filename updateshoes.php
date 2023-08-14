@@ -3,6 +3,7 @@ if (session_status() === PHP_SESSION_NONE) {
     session_start();
 }
 require_once("db_conn.php");
+if (isset($_SESSION['username'])) {
 
 // Fetch brands and categories from the database
 $stmt = "SELECT b_id, b_name FROM brands";
@@ -87,7 +88,12 @@ if (isset($_GET['s_id'])) {
             }
     }
 
-
+}
+else {
+    // Redirect back to the login page if not logged in
+    header("location: login.php");
+    exit;
+  }
 ?>
 <?php require_once('header.php'); ?>
 

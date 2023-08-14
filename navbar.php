@@ -31,6 +31,8 @@
             <li><a class="dropdown-item" href="insertshoes.php">Insert Shoe Product</a></li>
             <a class="dropdown-item" href="viewshoes.php">View Show Product</a>
             <div class="dropdown-divider"></div>
+            <li><a class="dropdown-item" href="viewmessages.php">Contact Massage</a></li>
+            <div class="dropdown-divider"></div>
             <li><a class="dropdown-item" href="product.php">View Product</a></li>
           </ul>
         </li>
@@ -71,22 +73,21 @@
         } else {
           // User is not logged in, show login button
           ?>
-          <li class="nav-item dropdown">
-          <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">
-          Login
+          
+        <li class="nav-item">
+          <a class="nav-link" href="login.php">Login</a>
+        </li>
+
+        <li class="nav-item dropdown" style="margin-right:50px;">
+          <a class="nav-link dropdown-toggle" href="registration.php" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+          Register
           </a>
           <ul class="dropdown-menu">
-            <li><a class="dropdown-item" href="login.php">User Login</a></li>
-            <li><a class="dropdown-item" href="admin_login.php">Admin Login</a></li>
-            <li><hr class="dropdown-divider"></li>
-            <li><a class="dropdown-item" href="#">Something else here</a></li>
+            <li><a class="dropdown-item" href="registration.php">User Register</a></li>
+            <li><a class="dropdown-item" href="admin_registration.php">Admin Register</a></li>
           </ul>
         </li>
 
-
-          <li class="nav-item">
-          <a class="nav-link" href="registration.php">Register</a>
-        </li>
           <?php
         }
         ?>

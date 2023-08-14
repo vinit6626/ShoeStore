@@ -1,5 +1,6 @@
 <?php
 require_once("db_conn.php");
+if (isset($_SESSION['username'])) {
 
 if ($_SERVER["REQUEST_METHOD"] === "GET" && isset($_GET['c_id'])) {
     $c_id = $_GET['c_id'];
@@ -20,4 +21,10 @@ if ($_SERVER["REQUEST_METHOD"] === "GET" && isset($_GET['c_id'])) {
     echo "Invalid request!";
     exit();
 }
+}
+else {
+    // Redirect back to the login page if not logged in
+    header("location: login.php");
+    exit;
+  }
 ?>

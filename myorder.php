@@ -2,10 +2,27 @@
 
 require_once("db_conn.php");
 session_start();
+if (isset($_SESSION['username'])) {
+
 $account_id = $_SESSION['user_id'];
-$query = "SELECT o.shoe_name, o.size, o.quantity, o.total, o.order_date, s.product_image FROM orders o JOIN shoe s ON o.s_id = s.s_id WHERE account_id = $account_id ORDER BY o.o_id DESC";
-$result = mysqli_query($conn, $query);
-$row_count = mysqli_num_rows($result);
+$query = "SELECT o.shoe_name, o.size, o.quantity, o.total, o.order_date, s.product_image
+          FROM orders o
+          JOIN shoe s ON o.s_id = s.s_id
+          WHERE account_id = ?
+          ORDER BY o.o_id DESC";
+
+$stmt = $conn->prepare($query);
+$stmt->bind_param("i", $account_id);
+$stmt->execute();
+$result = $stmt->get_result();
+$row_count = $result->num_rows;
+}
+else {
+    // Redirect back to the login page if not logged in
+    header("location: login.php");
+    exit;
+  }
+
 ?>
 
 <?php require_once('header.php'); ?>

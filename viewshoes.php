@@ -1,8 +1,10 @@
 <?php
-error_reporting(E_ALL);
-ini_set('display_errors', 1);
+// error_reporting(E_ALL);
+// ini_set('display_errors', 1);
+session_start();
 
 require_once("db_conn.php");
+if (isset($_SESSION['username'])) {
 
 $stmt = "SELECT s_id,b.b_name AS brand_name, c.c_name AS category_name, s.shoe_name, s.gender, s.shoe_sizes, s.product_description, s.product_image, s.price, s.quantity
          FROM shoe s
@@ -10,6 +12,12 @@ $stmt = "SELECT s_id,b.b_name AS brand_name, c.c_name AS category_name, s.shoe_n
          INNER JOIN categories c ON s.c_id = c.c_id";
 $result = mysqli_query($conn, $stmt);
 $numRows = mysqli_num_rows($result);
+}
+else {
+    // Redirect back to the login page if not logged in
+    header("location: login.php");
+    exit;
+  }
 ?>
 <?php require_once('header.php'); ?>
 <?php require_once('navbar.php'); ?>

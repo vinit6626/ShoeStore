@@ -1,5 +1,8 @@
 <?php
 require_once("db_conn.php");
+session_start();
+
+if (isset($_SESSION['username'])) {
 
 if (isset($_GET['s_id'])) {
   $shoesId = $_GET['s_id'];
@@ -48,7 +51,12 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
     echo "Invalid data. Please provide all required information.";
   }
 }
-
+}
+else {
+    // Redirect back to the login page if not logged in
+    header("location: login.php");
+    exit;
+  }
 
 
 ?>
@@ -155,7 +163,7 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
             </button>
           </h2>
           <div id="deliveryCollapse" class="accordion-collapse collapse mt-2" aria-labelledby="deliveryHeading" data-bs-parent="#faqAccordion">
-            <div class="accordion-body">
+            <div class="accordion-body" style="width: 70%; margin: auto;">
             <p>Free delivery free across country.</p>
             <p>You can return your order for any reason, free of charge, within 30 days.</p>
             </div>

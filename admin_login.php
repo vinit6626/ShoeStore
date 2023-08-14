@@ -1,7 +1,7 @@
 <?php
 session_start();
-// error_reporting(E_ALL);
-// ini_set('display_errors', 1);
+error_reporting(E_ALL);
+ini_set('display_errors', 1);
 
 require_once("db_conn.php");
 
@@ -10,6 +10,7 @@ function sanitizeInput($input){
   $input = strip_tags($input);
   $input = trim($input);
   $input = htmlentities($input, ENT_QUOTES, 'UTF-8');
+  $input = htmlspecialchars($input);
   return $input;
 }
 

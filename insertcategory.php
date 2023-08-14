@@ -1,12 +1,29 @@
 <?php
 session_start();
 
+// error_reporting(E_ALL);
+// ini_set('display_errors', 1);
 
 require_once("db_conn.php");
 
+if (isset($_SESSION['username'])) {
+
+    function sanitizeInput($input){
+        $input = str_replace(['(',')','"', ';'], '', $input);
+        $input = strip_tags($input);
+        $input = trim($input);
+        $input = htmlentities($input, ENT_QUOTES, 'UTF-8');
+        $input = htmlspecialchars($input);
+    
+        return $input;
+    }
 if ($_SERVER["REQUEST_METHOD"] === "POST") {
     // Initialize error messages array
-    $errors = array();
+
+    // echo "<pre>";
+    // print_r($_POST);
+    // echo "</pre>";
+    // $errors = array();
 
     // Retrieve form data
     $categoryName = sanitizeInput($_POST["categoryName"]);
@@ -39,15 +56,13 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
 }
 
 // Function to sanitize input (similar to your existing function)
-function sanitizeInput($input){
-    $input = str_replace(['(',')','"', ';'], '', $input);
-    $input = strip_tags($input);
-    $input = trim($input);
-    $input = htmlentities($input, ENT_QUOTES, 'UTF-8');
-    $input = htmlspecialchars($input);
 
-    return $input;
 }
+else {
+    // Redirect back to the login page if not logged in
+    header("location: login.php");
+    exit;
+  }
 ?>
 
 
@@ -89,17 +104,8 @@ function sanitizeInput($input){
 </form>
   </div>
 
-<!-- Footer Section -->
-<footer class="bg-dark text-white text-center py-5 footer-section">
-    <!-- ... (footer social media links and copyright info) ... -->
-</footer>
-
-<!-- Link to Bootstrap JS and jQuery (for the Navbar toggle) -->
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-
-</body>
-</html>
+  <?php require_once('footer.php'); ?>
+ 
 
 <script>
     function clearMessage() {

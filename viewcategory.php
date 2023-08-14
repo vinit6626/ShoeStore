@@ -1,12 +1,19 @@
 <?php
 session_start();
+if (isset($_SESSION['username'])) {
+
 require_once("db_conn.php");
     $stmt = "SELECT * FROM categories";
     $stmt = mysqli_prepare($conn, $stmt);
     mysqli_stmt_execute($stmt);
     $result = mysqli_stmt_get_result($stmt);
     $numRows = mysqli_num_rows($result);
-
+  }
+  else {
+      // Redirect back to the login page if not logged in
+      header("location: login.php");
+      exit;
+    }
     
 ?>
 

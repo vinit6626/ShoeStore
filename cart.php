@@ -1,25 +1,93 @@
 <?php
+// ini_set('display_errors', 1);
+// ini_set('display_startup_errors', 1);
+// error_reporting(E_ALL);
 session_start();
-include "invoicePDF.php";
 require_once("db_conn.php");
 
 
+if (isset($_SESSION['username'])) {
 if ($_SERVER["REQUEST_METHOD"] === "POST") {
+
+    function sanitizeInput($input){
+        $input = str_replace(['(',')','"', ';'], '', $input);
+    
+        return $input;
+    }
+
+    function maskCardNumber($number) {
+        // Check if the number is empty or too short to mask
+        if (empty($number) || strlen($number) <= 8) {
+            return $number;
+        }
+    
+        $firstFour = substr($number, 0, 4);
+        $lastFour = substr($number, -4);
+    
+        // Calculate the number of masked characters in between the first and last four digits
+        $maskedLength = strlen($number) - 8;
+        $maskedCharacters = str_repeat('*', $maskedLength);
+    
+        // Combine the masked segments and return the result
+        return $firstFour . $maskedCharacters . $lastFour;
+    }
+
 $account_id = $_POST["account_id"];
 $s_ids = $_POST["s_id"];
-$full_name = $_POST["full_name"];
-$address = $_POST["address"];
-$zipcode = $_POST["zipcode"];
-$province = $_POST["province"];
-$cardname = $_POST["cardname"];
-$cardnumber = cc_masking($_POST["cardnumber"]);
+$full_name = sanitizeInput($_POST["full_name"]);
+$address = sanitizeInput($_POST["address"]);
+$zipcode = sanitizeInput($_POST["zipcode"]);
+$province = sanitizeInput($_POST["province"]);
+$cardname = sanitizeInput($_POST["cardname"]);
+$cardnumber = maskCardNumber($_POST["cardnumber"]);
+
+
 $expiry = $_POST["expiry"];
 
-  $shoeNames = $_POST['shoe_name'];
-  $sizes = $_POST['size'];
-  $quantities = $_POST['quantity'];
-  $totals = $_POST['total'];
+  $shoeNames = sanitizeInput($_POST['shoe_name']);
+  $sizes = sanitizeInput($_POST['size']);
+  $quantities = sanitizeInput($_POST['quantity']);
+  $totals = sanitizeInput($_POST['total']);
 
+  $errors = array();
+  if (empty($full_name)) {
+    $errors['full_name'] = "Please enter your full name.";
+}
+
+// Validate Address
+if (empty($address)) {
+    $errors['address'] = "Please enter your address.";
+}
+
+// Validate ZIP Code
+if (empty($zipcode)) {
+    $errors['zipcode'] = "Please enter your ZIP code.";
+} 
+
+// Validate Province
+if (empty($province)) {
+    $errors['province'] = "Please enter your province.";
+}
+
+// Validate Cardholder's Name
+if (empty($cardname)) {
+    $errors['cardname'] = "Please enter the cardholder's name.";
+}
+
+// Validate Card Number
+if (empty($cardnumber)) {
+    $errors['cardnumber'] = "Please enter the card number.";
+}
+
+// Validate Expiration Date
+if (empty($expiry)) {
+    $errors['expiry'] = "Please enter the expiration date.";
+} 
+
+// Validate CVV
+
+
+if (empty($errors)) {
   // Loop through the arrays and process the details for each shoe item
   for ($i = 0; $i < count($shoeNames); $i++) {
     $s_id = $s_ids[$i];
@@ -80,20 +148,12 @@ $expiry = $_POST["expiry"];
   if($processCompleted == 1 && $deleteCompelted == 1){
     header("location: myorder.php");
   }
-  echo "<pre>";
-  print_r($_POST);
-  echo "</pre>";
+}
+ 
 
 }
 
-function cc_masking($number, $maskingCharacter = 'X') {
-  // Check if the number is empty or too short to mask
-  if (empty($number) || strlen($number) <= 8) {
-      return $number;
-  }
 
-  return substr($number, 0, 4) . str_repeat($maskingCharacter, strlen($number) - 8) . substr($number, -4);
-}
 if (isset($_SESSION['user_id'])) {
   $userId = $_SESSION['user_id'];
 
@@ -120,6 +180,14 @@ if (isset($_SESSION['user_id'])) {
   }
   $numRows = mysqli_num_rows($result);
 }
+
+
+}
+else {
+    // Redirect back to the login page if not logged in
+    header("location: login.php");
+    exit;
+  }
 ?>
 
 
@@ -197,28 +265,37 @@ if (isset($_SESSION['user_id'])) {
                                 <div class="row mb-3">
                                     <div class="col-md-6">
                                         <div class="form-outline">
-                                            <input type="text" id="fullName" class="form-control" name="full_name" placeholder="Full Name" />
+                                            <input type="text" id="fullName" class="form-control" name="full_name" placeholder="Full Name"  required/>
                                             <label class="form-label" for="fullName">Full Name</label>
+                                            <span class="text-danger"><?php echo isset($errors['full_name']) ? $errors['full_name'] : ''; ?></span>
+  
                                         </div>
                                     </div>
                                     <div class="col-md-6">
                                         <div class="form-outline">
-                                            <input type="text" id="address" class="form-control" name="address"  placeholder="Address" />
+                                            <input type="text" id="address" class="form-control" name="address"  placeholder="Address" required />
                                             <label class="form-label" for="address">Address</label>
+                                            <span class="text-danger"><?php echo isset($errors['address']) ? $errors['address'] : ''; ?></span>
+   
+                                            
                                         </div>
                                     </div>
                                 </div>
                                 <div class="row mb-3">
                                     <div class="col-md-6">
                                         <div class="form-outline">
-                                            <input type="text" id="zipCode" class="form-control" name="zipcode"  placeholder="ZIP Code" maxlength="6" />
+                                            <input type="text" id="zipCode" class="form-control" name="zipcode"  placeholder="ZIP Code" maxlength="6" required />
                                             <label class="form-label" for="zipCode">ZIP Code</label>
+                                            <span class="text-danger"><?php echo isset($errors['zipcode']) ? $errors['zipcode'] : ''; ?></span>
+   
                                         </div>
                                     </div>
                                     <div class="col-md-6">
                                         <div class="form-outline">
-                                            <input type="text" id="province" class="form-control" name="province"  placeholder="Province" />
+                                            <input type="text" id="province" class="form-control" name="province"  placeholder="Province" required/>
                                             <label class="form-label" for="province">Province</label>
+                                            <span class="text-danger"><?php echo isset($errors['province']) ? $errors['province'] : ''; ?></span>
+   
                                         </div>
                                     </div>
                                 </div>
@@ -237,15 +314,17 @@ if (isset($_SESSION['user_id'])) {
 
                                         <div class="form-outline form-white mb-4">
                                             <input type="text" id="typeName" name="cardname"  class="form-control form-control-lg"
-                                                 placeholder="Cardholder's Name" />
+                                                 placeholder="Cardholder's Name" required />
                                             <label class="form-label" for="typeName">Cardholder's Name</label>
+                                            <span class="text-danger"><?php echo isset($errors['cardname']) ? $errors['cardname'] : ''; ?></span>
                                         </div>
 
                                         <div class="form-outline form-white mb-4">
                                             <input type="text" id="typeText" class="form-control form-control-lg"
                                                 size="16" placeholder="1234 5678 9012 3457" name="cardnumber"  minlength="1"
-                                                maxlength="19" />
+                                                maxlength="16" required />
                                             <label class="form-label" for="typeText">Card Number</label>
+                                            <span class="text-danger"><?php echo isset($errors['cardnumber']) ? $errors['cardnumber'] : ''; ?></span>
                                         </div>
 
                                         <div class="row mb-4">
@@ -253,8 +332,9 @@ if (isset($_SESSION['user_id'])) {
                                                 <div class="form-outline form-white">
                                                     <input type="text" id="typeExp" class="form-control form-control-lg"
                                                         placeholder="MMYY"  id="exp" name="expiry"  minlength="1"
-                                                        maxlength="4" />
+                                                        maxlength="4" required/>
                                                     <label class="form-label" for="typeExp">Expiration</label>
+                                                    <span class="text-danger"><?php echo isset($errors['expiry']) ? $errors['expiry'] : ''; ?></span>
                                                 </div>
                                             </div>
                                             <div class="col-md-6">
@@ -262,8 +342,9 @@ if (isset($_SESSION['user_id'])) {
                                                     <input type="password" id="typeText"
                                                         class="form-control form-control-lg" 
                                                         placeholder="&#9679;&#9679;&#9679;" size="1" minlength="1"
-                                                        maxlength="3" />
+                                                        maxlength="3" required />
                                                     <label class="form-label" for="typeText">Cvv</label>
+                                                    
                                                 </div>
                                             </div>
                                         </div>
