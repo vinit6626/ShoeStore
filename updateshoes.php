@@ -3,25 +3,72 @@ if (session_status() === PHP_SESSION_NONE) {
     session_start();
 }
 require_once("db_conn.php");
-if (isset($_SESSION['username'])) {
 
-// Fetch brands and categories from the database
-$stmt = "SELECT b_id, b_name FROM brands";
-$result = mysqli_query($conn, $stmt);
-$brands = mysqli_fetch_all($result, MYSQLI_ASSOC);
+class ShoeUpdater {
+    private $conn;
 
-$stmt = "SELECT c_id, c_name FROM categories";
-$result = mysqli_query($conn, $stmt);
-$categories = mysqli_fetch_all($result, MYSQLI_ASSOC);
+    public function __construct($conn) {
+        $this->conn = $conn;
+    }
 
+    public function updateShoe($shoesId, $shoeName, $description, $gender, $price, $quantity, $brandId, $categoryId, $shoeSizes) {
+        // Update shoe information
+        $stmt = "UPDATE shoe SET 
+                    b_id = ?,
+                    c_id = ?,
+                    shoe_name = ?,
+                    product_description = ?,
+                    gender = ?,
+                    shoe_sizes = ?,
+                    price = ?,
+                    quantity = ?
+                WHERE s_id = ?";
+        $stmt = mysqli_prepare($this->conn, $stmt);
+        mysqli_stmt_bind_param($stmt, "iissssdii", $brandId, $categoryId, $shoeName, $description, $gender, $shoeSizes, $price, $quantity, $shoesId);
+        mysqli_stmt_execute($stmt);
 
-if (isset($_GET['s_id'])) {
-    $shoesId = $_GET['s_id'];
-    $_SESSION['shoes_id'] = $shoesId;
-    $stmt = "SELECT * FROM shoe WHERE s_id = $shoesId";
-    $result = mysqli_query($conn, $stmt);
-    $shoeData = mysqli_fetch_assoc($result);
+        if (mysqli_stmt_error($stmt)) {
+            return "Error occurred during the update: " . mysqli_stmt_error($stmt);
+        }
+
+        mysqli_stmt_close($stmt);
+        return "";
+    }
+
+    public function updateShoeImage($shoesId, $imagePath) {
+        $stmt = "UPDATE shoe SET product_image = ? WHERE s_id = ?";
+        $stmt = mysqli_prepare($this->conn, $stmt);
+        mysqli_stmt_bind_param($stmt, "si", $imagePath, $shoesId);
+        mysqli_stmt_execute($stmt);
+
+        if (mysqli_stmt_error($stmt)) {
+            return "Error occurred during image update: " . mysqli_stmt_error($stmt);
+        }
+
+        mysqli_stmt_close($stmt);
+        return "";
+    }
 }
+
+if (isset($_SESSION['username'])) {
+    $shoeUpdater = new ShoeUpdater($conn);
+
+    $stmt = "SELECT b_id, b_name FROM brands";
+    $result = mysqli_query($conn, $stmt);
+    $brands = mysqli_fetch_all($result, MYSQLI_ASSOC);
+
+    $stmt = "SELECT c_id, c_name FROM categories";
+    $result = mysqli_query($conn, $stmt);
+    $categories = mysqli_fetch_all($result, MYSQLI_ASSOC);
+
+    if (isset($_GET['s_id'])) {
+        $shoesId = $_GET['s_id'];
+        $_SESSION['shoes_id'] = $shoesId;
+        $stmt = "SELECT * FROM shoe WHERE s_id = $shoesId";
+        $result = mysqli_query($conn, $stmt);
+        $shoeData = mysqli_fetch_assoc($result);
+    }
+
     if ($_SERVER["REQUEST_METHOD"] == "POST") {
         $shoeName = $_POST['shoeName'];
         $description = $_POST['description'];
@@ -30,80 +77,48 @@ if (isset($_GET['s_id'])) {
         $quantity = $_POST['quantity'];
         $shoesId = $_SESSION['shoes_id'];
 
-           
-            if ($_FILES['productImage']['name']) {
-                $stmt = "SELECT * FROM shoe WHERE s_id = $shoesId";
-                $result = mysqli_query($conn, $stmt);
-                $shoeData = mysqli_fetch_assoc($result);
-                unlink($shoeData['product_image']);
+        if ($_FILES['productImage']['name']) {
+            $shoeData = mysqli_fetch_assoc(mysqli_query($conn, "SELECT * FROM shoe WHERE s_id = $shoesId"));
+            unlink($shoeData['product_image']);
 
-                
-                $timestamp = time(); 
-                $imageName = $timestamp . '_' . $_FILES['productImage']['name']; 
+            $timestamp = time();
+            $imageName = $timestamp . '_' . $_FILES['productImage']['name'];
+            $imagePath = "uploads/" . $imageName;
+            move_uploaded_file($_FILES['productImage']['tmp_name'], $imagePath);
 
-                $imagePath = "uploads/" . $imageName;
-                move_uploaded_file($_FILES['productImage']['tmp_name'], $imagePath);
-
-                $stmt = "UPDATE shoe SET product_image = ? WHERE s_id = ?";
-                $stmt = mysqli_prepare($conn, $stmt);
-                mysqli_stmt_bind_param($stmt, "si", $imagePath, $shoesId);
-                mysqli_stmt_execute($stmt);
-                if (mysqli_stmt_error($stmt)) {
-                    $errors[] = "Error occurred during image update: " . mysqli_stmt_error($stmt);
-                }
-    
-                mysqli_stmt_close($stmt);
+            $imageUpdateError = $shoeUpdater->updateShoeImage($shoesId, $imagePath);
+            if ($imageUpdateError) {
+                $errors[] = $imageUpdateError;
             }
+        }
 
-            $brandId = $_POST['brand'];
-            $categoryId = $_POST['category'];
-            $shoeSizes = implode(', ', $_POST['size']);
+        $brandId = $_POST['brand'];
+        $categoryId = $_POST['category'];
+        $shoeSizes = implode(', ', $_POST['size']);
 
-            
-            $stmt = "UPDATE shoe SET 
-                        b_id = ?,
-                        c_id = ?,
-                        shoe_name = ?,
-                        product_description = ?,
-                        gender = ?,
-                        shoe_sizes = ?,
-                        price = ?,
-                        quantity = ?
-                    WHERE s_id = ?";
-        
-            $stmt = mysqli_prepare($conn, $stmt);
-            mysqli_stmt_bind_param($stmt, "iissssdii", $brandId, $categoryId, $shoeName, $description, $gender, $shoeSizes, $price, $quantity, $shoesId);
-            mysqli_stmt_execute($stmt);
+        $updateError = $shoeUpdater->updateShoe($shoesId, $shoeName, $description, $gender, $price, $quantity, $brandId, $categoryId, $shoeSizes);
+        if ($updateError) {
+            $errors[] = $updateError;
+        }
 
-            // Check for errors
-            if (mysqli_stmt_error($stmt)) {
-                $errors[] = "Error occurred during the update: " . mysqli_stmt_error($stmt);
-            }
-
-            mysqli_stmt_close($stmt);
-
-            if (empty($errors)) {
-                header("Location: viewshoes.php");
-                exit();
-            }
+        if (empty($errors)) {
+            header("Location: viewshoes.php");
+            exit();
+        }
     }
-
-}
-else {
-    // Redirect back to the login page if not logged in
+} else {
     header("location: login.php");
     exit;
-  }
+}
 ?>
-<?php require_once('header.php'); ?>
 
+<?php require_once('header.php'); ?>
 <?php require_once('navbar.php'); ?>
 
 <div class="container mt-5 width40 mb-5">
     <h2 class="mb-4">Add New Shoe Product</h2>
     <form action="<?php echo $_SERVER['PHP_SELF']; ?>" method="post" enctype="multipart/form-data">
 
-   <!-- Brand selection -->
 <div class="mb-3">
     <label for="brand" class="form-label">Select Brand Name:</label>
     <select class="form-select" id="brand" name="brand">
@@ -114,7 +129,6 @@ else {
     </select>
 </div>
 
-<!-- Category selection -->
 <div class="mb-3">
     <label for="category" class="form-label">Select Category Name:</label>
     <select class="form-select" id="category" name="category">
@@ -125,19 +139,16 @@ else {
     </select>
 </div>
 
-<!-- Shoe Name -->
 <div class="mb-3">
     <label for="shoeName" class="form-label">Shoe Name:</label>
     <input type="text" class="form-control" id="shoeName" name="shoeName" placeholder="Shoe Name" value="<?php echo $shoeData['shoe_name']; ?>">
 </div>
 
-<!-- Product Description -->
 <div class="mb-3">
     <label for="description" class="form-label">Product Description:</label>
     <textarea class="form-control" id="description" name="description" placeholder="Product Description"><?php echo $shoeData['product_description']; ?></textarea>
 </div>
 
-    <!-- Gender selection -->
 <div class="mb-3">
     <label class="form-label">Gender:</label>
     <div class="form-check">
@@ -150,7 +161,6 @@ else {
     </div>
 </div>
 
-<!-- Available Sizes -->
 <div class="mb-3">
     <label class="form-label">Available Sizes:</label>
     <div class="form-check form-check-inline">
@@ -180,27 +190,22 @@ else {
         <img src="<?php echo $shoeData['product_image']; ?>" alt="Product Image" width="200"></td>
         <div>
     </div>
-<!-- Product Image -->
 <div class="mb-3 mt-3">
     <label for="productImage" class="form-label">Product New Image:</label>
     <input type="file" class="form-control" id="productImage" name="productImage" accept="image/*">
-    <!-- You can leave the value attribute empty for file inputs as they cannot be pre-filled -->
 </div>
 
-<!-- Price -->
 <div class="mb-3">
     <label for="price" class="form-label">Price:</label>
     <input type="text" class="form-control" name="price" placeholder="Shoe Price" value="<?php echo $shoeData['price']; ?>">
 </div>
 
-<!-- Quantity -->
 <div class="mb-3">
     <label for="quantity" class="form-label">Quantity:</label>
     <input type="number" class="form-control" id="quantity" name="quantity" placeholder="No of shoes" value="<?php echo $shoeData['quantity']; ?>">
 </div>
 
 
-    <!-- Submit button -->
     <button type="submit" class="btn btn-primary">Submit</button>
 </form>
 
@@ -208,7 +213,4 @@ else {
         </div>
         </div>
 
-
-
-<!-- Footer Section -->
 <?php require_once('footer.php'); ?>

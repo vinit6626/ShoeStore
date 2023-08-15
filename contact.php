@@ -1,69 +1,60 @@
 <?php
-// error_reporting(E_ALL);
-// ini_set('display_errors', 1);
-
+session_start();
 require_once("db_conn.php");
+class Database {
+  private $conn;
 
-// Initialize error messages array
+  public function __construct($conn) {
+      $this->conn = $conn;
+  }
+
+  public function insertContactMessage($name, $email, $phone, $message) {
+      $stmt = $this->conn->prepare("INSERT INTO contact_us (name, email, phone, message) VALUES (?, ?, ?, ?)");
+      $stmt->bind_param("ssss", $name, $email, $phone, $message);
+
+      $result = $stmt->execute();
+      $stmt->close();
+
+      return $result;
+  }
+}
 $errors = array();
 
-function sanitizeInput($input){
-  $input = str_replace(['(',')','"', ';'], '', $input);
-  $input = strip_tags($input);
-  $input = trim($input);
-  $input = htmlentities($input, ENT_QUOTES, 'UTF-8');
-  $input = htmlspecialchars($input);
-  return $input;
+function sanitizeInput($input) {
+    $input = str_replace(['(', ')', '"', ';'], '', $input);
+    $input = strip_tags($input);
+    $input = trim($input);
+    $input = htmlentities($input, ENT_QUOTES, 'UTF-8');
+    $input = htmlspecialchars($input);
+    return $input;
 }
-// Check if the form is submitted
+
 if ($_SERVER["REQUEST_METHOD"] === "POST") {
-    // Retrieve form data
+    $db = new Database($conn);
+
     $name = sanitizeInput($_POST["name"]);
     $email = sanitizeInput($_POST["email"]);
     $phone = sanitizeInput($_POST["phone"]);
     $message = sanitizeInput($_POST["message"]);
 
-    if (empty($errors)) {
-        $stmt = "INSERT INTO contact_us (name, email, phone, message) VALUES (?, ?, ?, ?)";
-        $stmt = mysqli_prepare($conn, $stmt);
-        mysqli_stmt_bind_param($stmt, "ssss", $name, $email, $phone, $message);
+    if (empty($name)) {
+        $errors['name'] = "Please enter your name.";
+    }
+    // Add checks for other fields as needed...
 
-        $result = mysqli_stmt_execute($stmt);
+    if (empty($errors)) {
+        $result = $db->insertContactMessage($name, $email, $phone, $message);
         if ($result) {
             echo "<div class='alert alert-success alert-dismissible fade show' role='alert' style='margin-bottom: 0px;'>Your message sent to ShoeStore admin.<button type='button' class='btn-close' data-bs-dismiss='alert' aria-label='Close'></button></div>";
-            // header("location: contact.php");
-            // exit;
         } else {
-            // echo "Error: " . $stmt->error;
             echo "<div class='alert alert-danger' role='alert' style='margin-bottom: 0px;'>Database error.</div>";
-            // header("location: contact.php");
         }
-        mysqli_stmt_close($stmt);
     }
 }
 ?>
 
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <link rel="icon" type="image/x-icon" href="./images/favicon.png">
-  <title>Shoe Store</title>
-  <!-- Link to Bootstrap CSS -->
-  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
-  <link rel="stylesheet" href="./css/style.css">
-  
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
-
-</head>
-<body>
-
+<?php require_once('header.php'); ?>
 <?php require_once('navbar.php'); ?>
-
-
-
-<!-- Welcome Section with Image -->
 <section class="hero-section custom-bg homepage-heading-section">
   <div class="container text-center homepage-heading-div">
     <h1 class="text-white">Welcome to Shoe Store</h1>
@@ -73,7 +64,6 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
 </section>
 
 
-<!-- FAQ Section -->
 <section class="faq-section py-5">
   <div class="container">
     <div class="row">
@@ -153,7 +143,6 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
 
 <hr class="line"/>
 
-<!-- Contact Details Section -->
 <section class="contact-details-section py-5 text-center">
   <div class="container">
     <div class="row justify-content-center">
@@ -169,7 +158,6 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
 
 <hr class="line"/>
 
-<!-- Contact Details Section -->
 <section class="contact-details-section py-5 mb-5">
   <div class="container">
     <div class="row">
@@ -186,7 +174,6 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
 
 <hr class="line"/>
 
-<!-- Contact Form Section -->
 <section class="contact-form-section py-5">
   <div class="container">
     <div class="row justify-content-center">
@@ -224,34 +211,14 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
 </section>
 
 
-<!-- Footer Section -->
-<footer class="bg-dark text-white text-center py-5 footer-section">
-    <a href="https://www.facebook.com/" target="_blank"><i class="fa-brands fa-twitter px-3"></i></a>
-    <a href="https://twitter.com/" target="_blank"><i class="fa-brands fa-facebook-f px-3"></i></a>
-    <a href="https://www.instagram.com/" target="_blank"><i class="fa-brands fa-instagram px-3"></i></a>
-    <a href="https://mail.google.com/" target="_blank"><i class="fa-solid fa-envelope px-3"></i></a>
-  <p class="mt-2">&copy; 2023 Shoe Store. All rights reserved.</p>
-</footer>
-
-
-<!-- Link to Bootstrap JS and jQuery (for the Navbar toggle) -->
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-
-</body>
-</html>
-
-<!-- JavaScript Section -->
+<?php require_once('footer.php'); ?>
 <script>
   const form = document.getElementById("contact-form");
 
   form.addEventListener("submit", function(event) {
-    event.preventDefault(); // Prevent form submission to check validation
-
-    // Validate the form fields
+    event.preventDefault(); 
     const isValid = validateForm();
 
-    // If all fields are valid, submit the form
     if (isValid) {
       form.submit();
     }
@@ -264,19 +231,16 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
     const phone = document.getElementById("phone").value.trim();
     const message = document.getElementById("message").value.trim();
 
-    // Clear previous error messages
     document.getElementById("name-error").textContent = "";
     document.getElementById("email-error").textContent = "";
     document.getElementById("phone-error").textContent = "";
     document.getElementById("message-error").textContent = "";
 
-    // Validate name
     if (name === "") {
       document.getElementById("name-error").textContent = "Name is required.";
       isValid = false;
     }
 
-    // Validate email
     if (email === "") {
       document.getElementById("email-error").textContent = "Email is required.";
       isValid = false;
@@ -285,7 +249,6 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
       isValid = false;
     }
 
-    // Validate phone
     if (phone === "") {
       document.getElementById("phone-error").textContent = "Phone number is required.";
       isValid = false;
@@ -294,7 +257,6 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
       isValid = false;
     }
 
-     // Validate message
      if (message === "") {
       document.getElementById("message-error").textContent = "Message is required.";
       isValid = false;
@@ -312,7 +274,6 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
 </script>
 
 <script>
-    // Add an event listener to the textarea for input events
     const messageInput = document.getElementById("message");
     messageInput.addEventListener("input", updateCharCount);
 
@@ -321,7 +282,6 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
       const charCountSpan = document.getElementById("char-count");
       const charCount = message.length;
       
-      // Update the character count display
       charCountSpan.textContent = charCount + "/200";
     }
   </script>

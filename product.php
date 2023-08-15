@@ -1,38 +1,56 @@
 <?php
 require_once("db_conn.php");
 session_start();
+class Product {
+    private $conn;
 
-if (isset($_SESSION['username'])) {
+    public function __construct($conn) {
+        $this->conn = $conn;
+    }
 
-if (isset($_COOKIE['brand'])) {
-  $brand = $_COOKIE['brand'];
-  $stmt = $conn->prepare("SELECT s.s_id, s.shoe_name, s.product_image, s.shoe_sizes, s.gender, s.price, s.quantity, b.b_name as brand_name
-       FROM shoe s
-       INNER JOIN brands b ON s.b_id = b.b_id
-       WHERE s.quantity > 0 AND b.b_name = ?");
-  $stmt->bind_param("s", $brand);
-}else{
-  $stmt = $conn->prepare("SELECT s.s_id, s.shoe_name, s.product_image, s.shoe_sizes, s.gender, s.price, s.quantity, b.b_name as brand_name
-  FROM shoe s
-  INNER JOIN brands b ON s.b_id = b.b_id
-  WHERE s.quantity > 0");
+    public function getProducts($brand = null) {
+        $query = "SELECT s.s_id, s.shoe_name, s.product_image, s.shoe_sizes, s.gender, s.price, s.quantity, b.b_name as brand_name
+                  FROM shoe s
+                  INNER JOIN brands b ON s.b_id = b.b_id
+                  WHERE s.quantity > 0";
+        if ($brand) {
+            $query .= " AND b.b_name = ?";
+            $stmt = $this->conn->prepare($query);
+            $stmt->bind_param("s", $brand);
+        } else {
+            $stmt = $this->conn->prepare($query);
+        }
+        $stmt->execute();
+        $result = $stmt->get_result();
+        return $result->fetch_all(MYSQLI_ASSOC);
+    }
 }
 
+class User {
+    private $conn;
 
-$stmt->execute();
+    public function __construct($conn) {
+        $this->conn = $conn;
+    }
 
-$result = $stmt->get_result();
-
-$products = $result->fetch_all(MYSQLI_ASSOC);
+    public function isLoggedIn() {
+        return isset($_SESSION['username']);
+    }
 }
-else {
-    // Redirect back to the login page if not logged in
+$productManager = new Product($conn);
+$userManager = new User($conn);
+if ($userManager->isLoggedIn()) {
+    if (isset($_COOKIE['brand'])) {
+        $brand = $_COOKIE['brand'];
+        $products = $productManager->getProducts($brand);
+    } else {
+        $products = $productManager->getProducts();
+    }
+} else {
     header("location: login.php");
     exit;
-  }
-
+}
 ?>
-
 <?php require_once('header.php'); ?>
 <?php require_once('navbar.php'); ?>
 
@@ -47,7 +65,6 @@ else {
   <div class="container">
     <?php include_once("filter_section.php"); ?>
     <div class="row" id="productContainer">
-      <!-- Products will be populated here -->
       <?php foreach ($products as $product): ?>
         <div class="col-md-4">
           <div class="card mb-4">

@@ -1,7 +1,23 @@
 <?php
 session_start();
-
 require_once("db_conn.php");
+
+class Database {
+    private $conn;
+
+    public function __construct($conn) {
+        $this->conn = $conn;
+    }
+
+    public function insertBrand($brandName) {
+        $stmt = "INSERT INTO brands (b_name) VALUES (?)";
+        $stmt = mysqli_prepare($this->conn, $stmt);
+        mysqli_stmt_bind_param($stmt, "s", $brandName);
+
+        return mysqli_stmt_execute($stmt);
+    }
+}
+
 if (isset($_SESSION['username'])) {
     function sanitizeInput($input){
         $input = str_replace(['(',')','"', ';'], '', $input);
@@ -12,65 +28,39 @@ if (isset($_SESSION['username'])) {
     
         return $input;
     }
-if ($_SERVER["REQUEST_METHOD"] === "POST") {
-    // Initialize error messages array
-    $errors = array();
 
-    // Retrieve form data
-    $brandName = sanitizeInput($_POST["brandName"]);
+    if ($_SERVER["REQUEST_METHOD"] === "POST") {
+        $brandName = sanitizeInput($_POST["brandName"]);
 
-    // Validate the input
-    if (empty($brandName)) {
-        $errors["brandName"] = "Brand Name is required.";
-    } elseif (strlen($brandName) > 50) {
-        $errors["brandName"] = "Brand Name cannot exceed 50 characters.";
-    }
+        $database = new Database($conn);
 
+        $errors = array();
 
-    // If there are no errors, then insert data only
-    if (empty($errors)) {
-        $stmt = "INSERT INTO brands (b_name) VALUES (?)";
-        $stmt = mysqli_prepare($conn, $stmt);
-        mysqli_stmt_bind_param($stmt, "s", $brandName);
-
-        $result = mysqli_stmt_execute($stmt);
-        if ($result) {
-            $_SESSION['message'] = $brandName . " has been inserted successfully. <a href='viewbrand.php'> Click here to view all Brand</a>";
-            header("location: insertbrand.php");
-            exit;
-        } else {
-            echo "Error: " . $stmt->error;
-            header("location: insertbrand.php");
+        if (empty($brandName)) {
+            $errors["brandName"] = "Brand Name is required.";
+        } elseif (strlen($brandName) > 50) {
+            $errors["brandName"] = "Brand Name cannot exceed 50 characters.";
         }
-        mysqli_stmt_close($stmt);
+
+        if (empty($errors)) {
+            $result = $database->insertBrand($brandName);
+            if ($result) {
+                $_SESSION['message'] = $brandName . " has been inserted successfully. <a href='viewbrand.php'> Click here to view all Brand</a>";
+                header("location: insertbrand.php");
+                exit;
+            } else {
+                echo "Error inserting data.";
+                header("location: insertbrand.php");
+            }
+        }
     }
-}
-
-// Function to sanitize input (similar to your existing function)
-
-}else {
-    // Redirect back to the login page if not logged in
+} else {
     header("location: login.php");
     exit;
-  }
-
+}
 ?>
 
-
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <link rel="icon" type="image/x-icon" href="./images/favicon.png">
-  <title>Shoe Store - Add Shoe Category</title>
-  <!-- Link to Bootstrap CSS -->
-  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
-  <link rel="stylesheet" href="./css/style.css">
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
-</head>
-<body>
-
+<?php require_once('header.php'); ?>
 <?php require_once('navbar.php'); ?>
 <?php if (isset($_SESSION['message'])) : ?>
     <div class='alert alert-success alert-dismissible fade show' role='alert' style='margin-bottom: 0px;'>
@@ -81,7 +71,6 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
     unset($_SESSION['message']);
     ?>
 <?php endif; ?>
-
 
 <div class="container mt-5 width40 mb-5">
     <h2 class="mb-4">Add New Shoe Brand</h2>
@@ -95,17 +84,7 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
     </form>
   </div>
 
-<!-- Footer Section -->
-<footer class="bg-dark text-white text-center py-5 footer-section">
-    <!-- ... (footer social media links and copyright info) ... -->
-</footer>
-
-<!-- Link to Bootstrap JS and jQuery (for the Navbar toggle) -->
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-
-</body>
-</html>
+  <?php require_once('footer.php'); ?>
 <script>
     function clearMessage() {
         window.location.href = window.location.href;

@@ -1,24 +1,33 @@
 <?php
-// error_reporting(E_ALL);
-// ini_set('display_errors', 1);
 session_start();
+class ShoeCRUD {
+    private $conn;
 
-require_once("db_conn.php");
-if (isset($_SESSION['username'])) {
+    public function __construct($conn) {
+        $this->conn = $conn;
+    }
 
-$stmt = "SELECT s_id,b.b_name AS brand_name, c.c_name AS category_name, s.shoe_name, s.gender, s.shoe_sizes, s.product_description, s.product_image, s.price, s.quantity
-         FROM shoe s
-         INNER JOIN brands b ON s.b_id = b.b_id
-         INNER JOIN categories c ON s.c_id = c.c_id";
-$result = mysqli_query($conn, $stmt);
-$numRows = mysqli_num_rows($result);
+    public function getAllShoes() {
+        $stmt = "SELECT s_id,b.b_name AS brand_name, c.c_name AS category_name, s.shoe_name, s.gender, s.shoe_sizes, s.product_description, s.product_image, s.price, s.quantity
+                 FROM shoe s
+                 INNER JOIN brands b ON s.b_id = b.b_id
+                 INNER JOIN categories c ON s.c_id = c.c_id";
+        $result = mysqli_query($this->conn, $stmt);
+        return $result;
+    }
 }
-else {
-    // Redirect back to the login page if not logged in
+require_once("db_conn.php");
+
+if (isset($_SESSION['username'])) {
+    $shoeCRUD = new ShoeCRUD($conn);
+    $result = $shoeCRUD->getAllShoes();
+    $numRows = mysqli_num_rows($result);
+} else {
     header("location: login.php");
     exit;
-  }
+}
 ?>
+
 <?php require_once('header.php'); ?>
 <?php require_once('navbar.php'); ?>
 
@@ -60,7 +69,6 @@ else {
           </thead>
           <tbody>
           <?php if ($numRows == 0) {
-            // If there are no categories, display the message here
             echo "<tr><td colspan='9' class='text-center'><h4><b>No Category Available</b></h4></td></tr>";
         } else {
           while ($row = mysqli_fetch_assoc($result)) : ?>
@@ -94,5 +102,4 @@ else {
   </div>
 </section>
 
-<!-- Footer Section -->
 <?php require_once('footer.php'); ?>

@@ -1,38 +1,33 @@
 <?php
 session_start();
-if (isset($_SESSION['username'])) {
+class BrandCRUD {
+    private $conn;
 
-require_once("db_conn.php");
-    $stmt = "SELECT * FROM brands";
-    $stmt = mysqli_prepare($conn, $stmt);
-    mysqli_stmt_execute($stmt);
-    $result = mysqli_stmt_get_result($stmt);
-    $numRows = mysqli_num_rows($result);
-  }
-  else {
-      // Redirect back to the login page if not logged in
-      header("location: login.php");
-      exit;
+    public function __construct($conn) {
+        $this->conn = $conn;
     }
-    
+
+    public function getAllBrands() {
+        $stmt = "SELECT * FROM brands";
+        $stmt = mysqli_prepare($this->conn, $stmt);
+        mysqli_stmt_execute($stmt);
+        return mysqli_stmt_get_result($stmt);
+    }
+}
+
+if (isset($_SESSION['username'])) {
+    require_once("db_conn.php");
+
+    $brandCRUD = new BrandCRUD($conn);
+    $brandsResult = $brandCRUD->getAllBrands();
+    $numRows = mysqli_num_rows($brandsResult);
+} else {
+    header("location: login.php");
+    exit;
+}
 ?>
 
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <link rel="icon" type="image/x-icon" href="./images/favicon.png">
-  <title>Shoe Store</title>
-  <!-- Link to Bootstrap CSS -->
-  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
-  <link rel="stylesheet" href="./css/style.css">
-  
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
-
-</head>
-<body>
-
+<?php require_once('header.php'); ?>
 <?php require_once('navbar.php'); ?>
 <?php if (isset($_SESSION['message'])) : ?>
     <div class='alert alert-success alert-dismissible fade show' role='alert' style='margin-bottom: 0px;'>
@@ -44,8 +39,6 @@ require_once("db_conn.php");
     ?>
 <?php endif; ?>
 
-
-  
 <section class="order-page py-5">
   <div class="container">
     <div class="row">
@@ -64,15 +57,11 @@ require_once("db_conn.php");
             </tr>
           </thead>
           <tbody>
-            <!-- Dummy data for the order details -->
-            
         <?php
         if ($numRows == 0) {
-            // If there are no categories, display the message here
             echo "<tr><td colspan='3' class='text-center'><h4><b>No Brand Available</b></h4></td></tr>";
         } else {
-            // If there are categories, display them in the table
-            while ($row = mysqli_fetch_assoc($result)) {
+            while ($row = mysqli_fetch_assoc($brandsResult)) {
         ?>
            <tr>
                 <td>
@@ -89,7 +78,6 @@ require_once("db_conn.php");
                 }
             }
             ?>
-            <!-- Add more rows for other products in the order -->
           </tbody>
          
         </table>
@@ -98,22 +86,7 @@ require_once("db_conn.php");
   </div>
 </section>
 
-<!-- Footer Section -->
-<footer class="bg-dark text-white text-center py-5 footer-section">
-    <a href="https://www.facebook.com/" target="_blank"><i class="fa-brands fa-twitter px-3"></i></a>
-    <a href="https://twitter.com/" target="_blank"><i class="fa-brands fa-facebook-f px-3"></i></a>
-    <a href="https://www.instagram.com/" target="_blank"><i class="fa-brands fa-instagram px-3"></i></a>
-    <a href="https://mail.google.com/" target="_blank"><i class="fa-solid fa-envelope px-3"></i></a>
-  <p class="mt-2">&copy; 2023 Shoe Store. All rights reserved.</p>
-</footer>
-
-
-<!-- Link to Bootstrap JS and jQuery (for the Navbar toggle) -->
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-
-</body>
-</html>
+<?php require_once('footer.php'); ?>
 <script>
     function clearMessage() {
         window.location.href = window.location.href;

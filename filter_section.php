@@ -1,17 +1,28 @@
 <?php
 require_once("db_conn.php");
+class Database {
+  private $conn;
 
-// Fetch data from the brands table
-$brandsQuery = "SELECT b_id, b_name FROM brands";
-$brandsResult = mysqli_query($conn, $brandsQuery);
-$brands = mysqli_fetch_all($brandsResult, MYSQLI_ASSOC);
+  public function __construct($conn) {
+      $this->conn = $conn;
+  }
+  public function fetchBrands() {
+      $brandsQuery = "SELECT b_id, b_name FROM brands";
+      $brandsResult = mysqli_query($this->conn, $brandsQuery);
+      return mysqli_fetch_all($brandsResult, MYSQLI_ASSOC);
+  }
+  public function fetchCategories() {
+      $categoriesQuery = "SELECT c_id, c_name FROM categories";
+      $categoriesResult = mysqli_query($this->conn, $categoriesQuery);
+      return mysqli_fetch_all($categoriesResult, MYSQLI_ASSOC);
+  }
+}
 
-$categoriesQuery = "SELECT c_id, c_name FROM categories";
-$categoriesResult = mysqli_query($conn, $categoriesQuery);
-$categories = mysqli_fetch_all($categoriesResult, MYSQLI_ASSOC);
+$database = new Database($conn);
+$brands = $database->fetchBrands();
+$categories = $database->fetchCategories();
+
 ?>
-
-
 <div class="container mb-4">
   <div class="row justify-content-center align-items-center">
     <div class="col-md-12">
@@ -26,8 +37,8 @@ $categories = mysqli_fetch_all($categoriesResult, MYSQLI_ASSOC);
         <?php endforeach; ?>
       </select>
     </div>
-    <!-- Category Filter -->
-<div class="col-md-2">
+
+    <div class="col-md-2">
   <label for="category">Category:</label>
   <select class="form-select" id="category">
     <option value="all">All</option>
@@ -56,7 +67,6 @@ function applyFilters() {
   const categoryValue = document.getElementById('category').value;
   const sortPriceValue = document.getElementById('sortPrice').value;
 
-  // Send AJAX request to fetch filtered data
   const xhttp = new XMLHttpRequest();
   xhttp.onreadystatechange = function() {
     if (this.readyState === 4 && this.status === 200) {
@@ -72,9 +82,7 @@ function applyFilters() {
 
 function displayFilteredData(products) {
   const productContainer = document.getElementById('productContainer');
-  productContainer.innerHTML = ''; // Clear previous products
-
-  // Check if there are any products to display
+  productContainer.innerHTML = ''; 
   if (products.length === 0) {
     const noResultsHTML = `
       <div class="col-md-12 text-center">
@@ -83,7 +91,6 @@ function displayFilteredData(products) {
     `;
     productContainer.insertAdjacentHTML('beforeend', noResultsHTML);
   } else {
-    // Loop through the filtered products and create cards
     products.forEach(product => {
       const cardHTML = `
         <div class="col-md-4">

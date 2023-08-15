@@ -1,205 +1,185 @@
 <?php
-// ini_set('display_errors', 1);
-// ini_set('display_startup_errors', 1);
-// error_reporting(E_ALL);
 session_start();
 require_once("db_conn.php");
 
+class Database {
+    private $conn;
+
+    public function __construct($conn) {
+        $this->conn = $conn;
+    }
+
+    public function insertOrder($account_id, $s_id, $full_name, $address, $zip_code, $province, $cardname, $card_number, $expiry, $shoe_name, $size, $quantity, $total) {
+        $sql = "INSERT INTO orders (account_id, s_id, full_name, address, zip_code, province, cardname, card_number, expiry, shoe_name, size, quantity, total, order_date) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW())";
+        $stmt = $this->conn->prepare($sql);
+        $stmt->bind_param(
+            "iissssssssids",
+            $account_id,
+            $s_id,
+            $full_name,
+            $address,
+            $zip_code,
+            $province,
+            $cardname,
+            $card_number,
+            $expiry,
+            $shoe_name,
+            $size,
+            $quantity,
+            $total
+        );
+
+        return $stmt->execute();
+    }
+
+    public function updateShoeQuantity($s_id, $quantity) {
+        $updateSql = "UPDATE shoe SET quantity = quantity - ? WHERE s_id = ?";
+        $updateStmt = $this->conn->prepare($updateSql);
+        $updateStmt->bind_param("ii", $quantity, $s_id);
+        return $updateStmt->execute();
+    }
+
+    public function deleteCartItems($account_id) {
+        $deleteSql = "DELETE FROM cart WHERE account_id = ?";
+        $deleteStmt = $this->conn->prepare($deleteSql);
+        $deleteStmt->bind_param("i", $account_id);
+        return $deleteStmt->execute();
+    }
+}
+
+$errors = array();
 
 if (isset($_SESSION['username'])) {
-if ($_SERVER["REQUEST_METHOD"] === "POST") {
-
-    function sanitizeInput($input){
-        $input = str_replace(['(',')','"', ';'], '', $input);
-    
-        return $input;
-    }
-
-    function maskCardNumber($number) {
-        // Check if the number is empty or too short to mask
-        if (empty($number) || strlen($number) <= 8) {
-            return $number;
+    if ($_SERVER["REQUEST_METHOD"] === "POST") {
+        function sanitizeInput($input){
+            $input = str_replace(['(',')','"', ';'], '', $input);
+            return $input;
         }
-    
-        $firstFour = substr($number, 0, 4);
-        $lastFour = substr($number, -4);
-    
-        // Calculate the number of masked characters in between the first and last four digits
-        $maskedLength = strlen($number) - 8;
-        $maskedCharacters = str_repeat('*', $maskedLength);
-    
-        // Combine the masked segments and return the result
-        return $firstFour . $maskedCharacters . $lastFour;
-    }
+        function maskCardNumber($number) {
+            if (empty($number) || strlen($number) <= 8) {
+                return $number;
+            }
+            $firstFour = substr($number, 0, 4);
+            $lastFour = substr($number, -4);
+            $maskedLength = strlen($number) - 8;
+            $maskedCharacters = str_repeat('*', $maskedLength);
+            return $firstFour . $maskedCharacters . $lastFour;
+        }
+    $account_id = $_POST["account_id"];
+    $s_ids = $_POST["s_id"];
+    $full_name = sanitizeInput($_POST["full_name"]);
+    $address = sanitizeInput($_POST["address"]);
+    $zipcode = sanitizeInput($_POST["zipcode"]);
+    $province = sanitizeInput($_POST["province"]);
+    $cardname = sanitizeInput($_POST["cardname"]);
+    $cardnumber = maskCardNumber($_POST["cardnumber"]);
+        
+        $db = new Database($conn);
 
-$account_id = $_POST["account_id"];
-$s_ids = $_POST["s_id"];
-$full_name = sanitizeInput($_POST["full_name"]);
-$address = sanitizeInput($_POST["address"]);
-$zipcode = sanitizeInput($_POST["zipcode"]);
-$province = sanitizeInput($_POST["province"]);
-$cardname = sanitizeInput($_POST["cardname"]);
-$cardnumber = maskCardNumber($_POST["cardnumber"]);
+        $processCompleted = 0;
+        $deleteCompleted = 0;
 
-
+       
 $expiry = $_POST["expiry"];
 
-  $shoeNames = sanitizeInput($_POST['shoe_name']);
-  $sizes = sanitizeInput($_POST['size']);
-  $quantities = sanitizeInput($_POST['quantity']);
-  $totals = sanitizeInput($_POST['total']);
+$shoeNames = sanitizeInput($_POST['shoe_name']);
+$sizes = sanitizeInput($_POST['size']);
+$quantities = sanitizeInput($_POST['quantity']);
+$totals = sanitizeInput($_POST['total']);
 
-  $errors = array();
-  if (empty($full_name)) {
-    $errors['full_name'] = "Please enter your full name.";
+$errors = array();
+if (empty($full_name)) {
+  $errors['full_name'] = "Please enter your full name.";
 }
 
-// Validate Address
 if (empty($address)) {
-    $errors['address'] = "Please enter your address.";
+  $errors['address'] = "Please enter your address.";
 }
-
-// Validate ZIP Code
 if (empty($zipcode)) {
-    $errors['zipcode'] = "Please enter your ZIP code.";
+  $errors['zipcode'] = "Please enter your ZIP code.";
 } 
-
-// Validate Province
 if (empty($province)) {
-    $errors['province'] = "Please enter your province.";
+  $errors['province'] = "Please enter your province.";
 }
-
-// Validate Cardholder's Name
 if (empty($cardname)) {
-    $errors['cardname'] = "Please enter the cardholder's name.";
+  $errors['cardname'] = "Please enter the cardholder's name.";
 }
-
-// Validate Card Number
 if (empty($cardnumber)) {
-    $errors['cardnumber'] = "Please enter the card number.";
+  $errors['cardnumber'] = "Please enter the card number.";
 }
-
-// Validate Expiration Date
 if (empty($expiry)) {
-    $errors['expiry'] = "Please enter the expiration date.";
+  $errors['expiry'] = "Please enter the expiration date.";
 } 
+        if (empty($errors)) {
+            foreach ($shoeNames as $i => $shoeName) {
+                $result = $db->insertOrder(
+                    $account_id,
+                    $s_ids[$i],
+                    $full_name,
+                    $address,
+                    $zipcode,
+                    $province,
+                    $cardname,
+                    $cardnumber,
+                    $expiry,
+                    $shoeName,
+                    $sizes[$i],
+                    $quantities[$i],
+                    $totals[$i]
+                );
 
-// Validate CVV
+                if ($result) {
+                    $db->updateShoeQuantity($s_ids[$i], $quantities[$i]);
+                    $processCompleted = 1;
+                }
+            }
 
+            if ($processCompleted == 1) {
+                $deleteCompleted = $db->deleteCartItems($_SESSION['user_id']);
+            }
 
-if (empty($errors)) {
-  // Loop through the arrays and process the details for each shoe item
-  for ($i = 0; $i < count($shoeNames); $i++) {
-    $s_id = $s_ids[$i];
-      $shoeName = $shoeNames[$i];
-      $size = $sizes[$i];
-      $quantity = $quantities[$i];
-      $total = $totals[$i];
-      
-      
-      $sql = "INSERT INTO orders (account_id, s_id, full_name, address, zip_code, province, cardname, card_number, expiry, shoe_name, size, quantity, total, order_date) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW())";
+            if ($processCompleted == 1 && $deleteCompleted == 1) {
+                header("location: myorder.php");
+                exit;
+            }
+        }
+    }
 
-      // Prepare the statement
-      $stmt = $conn->prepare($sql);
-      
-      // Bind the parameters
-      $stmt->bind_param(
-          "iissssssssids",
-          $account_id,
-          $s_id,
-          $full_name,
-          $address,
-          $zipcode,
-          $province,
-          $cardname,
-          $cardnumber,
-          $expiry,
-          $shoeName,
-          $size,
-          $quantity,
-          $total
-      );
-      
+    if (isset($_SESSION['user_id'])) {
+        $userId = $_SESSION['user_id'];
 
-    // Execute the query
-    $stmt->execute();
-    
+        $sql = "SELECT c.*, s.b_id, s.shoe_name, s.product_image, s.price, s.s_id
+        FROM cart c
+        INNER JOIN shoe s ON c.s_id = s.s_id
+        WHERE c.account_id = ?";
+$stmt = $conn->prepare($sql);
+$stmt->bind_param('i', $userId);
+$stmt->execute();
+$result = $stmt->get_result();
 
-    $updateSql = "UPDATE shoe SET quantity = quantity - ? WHERE s_id = ?";
-    $updateStmt = $conn->prepare($updateSql);
-    $updateStmt->bind_param("ii", $quantity, $s_id);
-    $updateStmt->execute();
-
-
-    
-    $processCompleted = 1;
-  }
-  
-
-  if($processCompleted == 1){
-    $deleteSql = "DELETE FROM cart WHERE account_id = ?";
-    $deleteStmt = $conn->prepare($deleteSql);
-    $deleteStmt->bind_param("i", $_SESSION['user_id']); 
-    $deleteStmt->execute();
-    $deleteStmt->close();
-    $deleteCompelted = 1;
-  }
- 
-  if($processCompleted == 1 && $deleteCompelted == 1){
-    header("location: myorder.php");
-  }
-}
- 
-
-}
-
-
-if (isset($_SESSION['user_id'])) {
-  $userId = $_SESSION['user_id'];
-
-  // Fetch cart details with shoe information using JOIN
-  $sql = "SELECT c.*, s.b_id, s.shoe_name, s.product_image, s.price, s.s_id
-          FROM cart c
-          INNER JOIN shoe s ON c.s_id = s.s_id
-          WHERE c.account_id = ?";
-  $stmt = $conn->prepare($sql);
-  $stmt->bind_param('i', $userId);
-  $stmt->execute();
-  $result = $stmt->get_result();
-
-  $cartItems = array();
-  while ($row = $result->fetch_assoc()) {
+$cartItems = array();
+while ($row = $result->fetch_assoc()) {
     $cartItems[] = $row;
-  }
-
-  $totalCartValue = 0;
-  if (isset($cartItems) && !empty($cartItems)) {
-      foreach ($cartItems as $item) {
-          $totalCartValue += $item['quantity'] * $item['price'];
-      }
-  }
-  $numRows = mysqli_num_rows($result);
 }
 
-
+$totalCartValue = 0;
+foreach ($cartItems as $item) {
+    $totalCartValue += $item['quantity'] * $item['price'];
 }
-else {
-    // Redirect back to the login page if not logged in
+        $numRows = count($cartItems);
+    }
+} else {
     header("location: login.php");
     exit;
-  }
+}
 ?>
 
-
 <?php require_once('header.php'); ?>
-
 <?php require_once('navbar.php'); ?>
-
 
 <header>
     <h1 class="text-center">Cart</h1>
   </header>
-
   <body>
 
   <section class="h-100 h-custom" style="background-color: #eee;">
@@ -218,7 +198,6 @@ else {
                                     <p class="mb-0">You have <?php echo $numRows; ?> items in your cart</p>
                                 </div>
                             </div>
-<!-- Display the cart items in cards -->
 <?php if (isset($cartItems) && !empty($cartItems)) : ?>
     <?php foreach ($cartItems as $item) : ?>
         <div class="card mb-5">
@@ -234,7 +213,6 @@ else {
                             <p class="small mb-0">Quantity:<?php echo $item['quantity']; ?></p>
                         </div>
                     </div>
-                       <!-- Add hidden input fields to store shoe details -->
                 <input type="hidden" name="s_id[]" value="<?php echo $item['s_id']; ?>" />
                 <input type="hidden" name="shoe_name[]" value="<?php echo $item['shoe_name']; ?>" />
                 <input type="hidden" name="size[]" value="<?php echo $item['size']; ?>" />
@@ -258,9 +236,6 @@ else {
         <h4  class="float-right" >Your Total: $<?php echo number_format($totalCartValue, 2); ?></h4>
     </div>
 
-
-<!-- shipping detail form -->
-                                
           <h5 class="mb-3">Shipping Details</h5>
                                 <div class="row mb-3">
                                     <div class="col-md-6">
@@ -377,7 +352,6 @@ else {
                   </div>
                 </form>
                 <?php else : ?>
-    <!-- Display a message if the cart is empty -->
     <div class="card mb-5">
         <div class="card-body">
             <p class="text-center mb-0">Your cart is empty.</p>
@@ -390,6 +364,3 @@ else {
 </body>
 
 <?php require_once('footer.php'); ?> 
-
-<script src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/js/all.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/js/bootstrap.bundle.min.js"></script>

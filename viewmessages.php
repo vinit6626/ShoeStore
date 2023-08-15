@@ -1,25 +1,34 @@
 <?php
-// error_reporting(E_ALL);
-// ini_set('display_errors', 1);
 session_start();
+class ContactUsCRUD {
+    private $conn;
+
+    public function __construct($conn) {
+        $this->conn = $conn;
+    }
+
+    public function getAllMessages() {
+        $stmt = "SELECT * FROM contact_us";
+        $stmt = mysqli_prepare($this->conn, $stmt);
+        mysqli_stmt_execute($stmt);
+        return mysqli_stmt_get_result($stmt);
+    }
+}
+
 
 if (isset($_SESSION['username'])) {
   require_once("db_conn.php");
 
-$stmt = "SELECT *
-         FROM contact_us";
-$stmt = mysqli_prepare($conn, $stmt);
-mysqli_stmt_execute($stmt);
-$result = mysqli_stmt_get_result($stmt);
-$numRows = mysqli_num_rows($result);
-
+  $contactUsCRUD = new ContactUsCRUD($conn);
+  $result = $contactUsCRUD->getAllMessages();
+  $numRows = mysqli_num_rows($result);
+} else {
+  header("location: login.php");
+  exit;
 }
-else {
-    // Redirect back to the login page if not logged in
-    header("location: login.php");
-    exit;
-  }
+
 ?>
+
 <?php require_once('header.php'); ?>
 <?php require_once('navbar.php'); ?>
 

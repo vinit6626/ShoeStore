@@ -1,103 +1,92 @@
 <?php
-error_reporting(E_ALL);
-ini_set('display_errors', 1);
-
 require_once("db_conn.php");
 
-// Initialize error messages array
-$errors = array();
+class Database {
+    private $conn;
 
-function sanitizeInput($input){
-  $input = str_replace(['(',')','"', ';'], '', $input);
+    public function __construct($conn) {
+        $this->conn = $conn;
+    }
+
+    public function insertAdmin($username, $email, $password, $user_type) {
+        $hashedPassword = password_hash($password, PASSWORD_DEFAULT);
+
+        $query = "INSERT INTO account (username, email, password, user_type) VALUES (?, ?, ?, ?)";
+        $stmt = mysqli_prepare($this->conn, $query);
+        mysqli_stmt_bind_param($stmt, "ssss", $username, $email, $hashedPassword, $user_type);
+
+        $result = mysqli_stmt_execute($stmt);
+        mysqli_stmt_close($stmt);
+        return $result;
+    }
+
+    public function checkExistingUsername($username) {
+        $query = "SELECT * FROM account WHERE username = ?";
+        $stmt = mysqli_prepare($this->conn, $query);
+        mysqli_stmt_bind_param($stmt, "s", $username);
+        mysqli_stmt_execute($stmt);
+        $result = mysqli_stmt_get_result($stmt);
+        $existingUser = mysqli_num_rows($result) > 0;
+        mysqli_stmt_close($stmt);
+        return $existingUser;
+    }
+
+    public function checkExistingEmail($email) {
+        $query = "SELECT * FROM account WHERE email = ?";
+        $stmt = mysqli_prepare($this->conn, $query);
+        mysqli_stmt_bind_param($stmt, "s", $email);
+        mysqli_stmt_execute($stmt);
+        $result = mysqli_stmt_get_result($stmt);
+        $existingEmail = mysqli_num_rows($result) > 0;
+        mysqli_stmt_close($stmt);
+        return $existingEmail;
+    }
+}
+function sanitizeInput($input) {
+  $input = str_replace(['(', ')', '"', ';'], '', $input);
   $input = strip_tags($input);
   $input = trim($input);
   $input = htmlentities($input, ENT_QUOTES, 'UTF-8');
   $input = htmlspecialchars($input);
   return $input;
 }
-// Check if the form is submitted
+
+$errors = array();
+
 if ($_SERVER["REQUEST_METHOD"] === "POST") {
-    // Retrieve form data
-    $username = sanitizeInput($_POST["adminname"]);
-    $email = sanitizeInput($_POST["adminemail"]);
-    $password = sanitizeInput($_POST["adminPassword"]);
-    $cpassword = sanitizeInput($_POST["cpassword"]);
-    $hashedPassword = password_hash($password, PASSWORD_DEFAULT);
-    $user_type = "Admin";
+  $db = new Database($conn);
 
+  $username = sanitizeInput($_POST["adminname"]);
+  $email = sanitizeInput($_POST["adminemail"]);
+  $password = sanitizeInput($_POST["adminPassword"]);
+  $cpassword = sanitizeInput($_POST["cpassword"]);
+  $user_type = "Admin";
 
-    if (empty($errors)) {
+  if ($db->checkExistingUsername($username)) {
+      $errors["adminname"] = "Admin Name is already taken. Please choose a different Admin Name.";
+  }
 
-      // Check if the username is unique
-      $query = "SELECT * FROM account WHERE username = ?";
-      $stmt = mysqli_prepare($conn, $query);
-      mysqli_stmt_bind_param($stmt, "s", $username);
-      mysqli_stmt_execute($stmt);
-      $result = mysqli_stmt_get_result($stmt);
-      if (mysqli_num_rows($result) > 0) {
-          $errors["adminname"] = "Admin Name is already taken. Please choose a different Admin Name.";
+  if ($db->checkExistingEmail($email)) {
+      $errors["adminemail"] = "Admin Email is already registered. Please use a different Admin Email.";
+  }
+
+  if (empty($errors)) {
+      $result = $db->insertAdmin($username, $email, $password, $user_type);
+      if ($result) {
+          echo "Data inserted successfully!";
+          header("location: admin_login.php");
+          exit;
+      } else {
+          echo "Error inserting data.";
+          header("location: admin_registration.php");
       }
-      mysqli_stmt_close($stmt);
-  
-      // Check if the email is unique
-      $query = "SELECT * FROM account WHERE username = ?";
-      $stmt = mysqli_prepare($conn, $query);
-      mysqli_stmt_bind_param($stmt, "s", $username);
-      mysqli_stmt_execute($stmt);
-      $result = mysqli_stmt_get_result($stmt);
-      if (mysqli_num_rows($result) > 0) {
-          $errors["adminemail"] = "Admin Email is already registered. Please use a different Admin Email.";
-      }
-      mysqli_stmt_close($stmt);
-
-    }
-
-
-    // If there are no errors, then insert data only
-    if (empty($errors)) {
-        // Prepare and execute the database insertion query
-        $stmt = "INSERT INTO account (username,  email, password, user_type) VALUES (?, ?, ?, ?)";
-        $stmt = mysqli_prepare($conn, $stmt);
-        mysqli_stmt_bind_param($stmt, "ssss",$username, $email, $hashedPassword, $user_type);
-
-        $result = mysqli_stmt_execute($stmt);
-        if ($result) {
-            echo "Data inserted successfully!";
-            header("location: admin_login.php");
-            exit;
-        } else {
-            echo "Error: " . $stmt->error;
-            header("location: admin_registration.php");
-        }
-        mysqli_stmt_close($stmt);
-    }
+  }
 }
 ?>
 
-
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <link rel="icon" type="image/x-icon" href="./images/favicon.png">
-  <title>Shoe Store</title>
-  <!-- Link to Bootstrap CSS -->
-  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
-  <link rel="stylesheet" href="./css/style.css">
-  
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
-
-</head>
-<body>
-
-
+<?php require_once('header.php'); ?>
 <?php require_once('navbar.php'); ?>
 
-
-
-
-<!-- Welcome Section with Image -->
 <section class="hero-section custom-bg homepage-heading-section">
   <div class="container text-center homepage-heading-div">
     <h1 class="text-white">Welcome to Shoe Store</h1>
@@ -106,16 +95,12 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
   </div>
 </section>
 
-
-<!-- Registration Section -->
-<!-- Registration Section -->
 <section class="registration-section py-5">
     <div class="container">
       <div class="row justify-content-center">
         <div class="col-md-6">
           <h2 class="mb-4 text-center">Admin Sign up</h2>
           <form method="POST" action="<?php echo $_SERVER['PHP_SELF'];?>" id="admin-registration-form">
-            <!-- Form fields and error messages -->
             <div class="mb-3">
               <label for="adminname" class="form-label">Admin Name</label>
               <input type="text" class="form-control" id="adminname" name="adminname" placeholder="Admin Name"
@@ -150,38 +135,15 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
     </div>
   </section>
 
-
-
-<!-- Footer Section -->
-<footer class="bg-dark text-white text-center py-5 footer-section">
-    <i class="fa-brands fa-twitter px-3"></i>
-    <i class="fa-brands fa-facebook-f px-3"></i>
-    <i class="fa-brands fa-instagram px-3"></i>
-    <i class="fa-solid fa-envelope px-3"></i>
-  <p class="mt-2">&copy; 2023 Shoe Store. All rights reserved.</p>
-</footer>
-
-
-<!-- Link to Bootstrap JS and jQuery (for the Navbar toggle) -->
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-
-</body>
-</html>
-
-
-<!-- JavaScript Section -->
+  <?php require_once('footer.php'); ?>
 <script>
 
   const form = document.getElementById("admin-registration-form");
 
   form.addEventListener("submit", function(event) {
-    event.preventDefault(); // Prevent form submission to check validation
-
-    // Validate the form fields
+    event.preventDefault();
     const isValid = validateForm();
 
-    // If all fields are valid, submit the form
     if (isValid) {
       form.submit();
     }
@@ -194,19 +156,16 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
     const adminPassword = document.getElementById("adminPassword").value.trim();
     const cpassword = document.getElementById("cpassword").value.trim();
 
-    // Clear previous error messages
     document.getElementById("adminname-error").textContent = "";
     document.getElementById("adminemail-error").textContent = "";
     document.getElementById("adminPassword-error").textContent = "";
     document.getElementById("cpassword-error").textContent = "";
 
-    // Validate username
     if (adminname === "") {
       document.getElementById("adminname-error").textContent = "Admin Name is required.";
       isValid = false;
     }
 
-    // Validate email
     if (adminemail === "") {
       document.getElementById("adminemail-error").textContent = "Admin Email is required.";
       isValid = false;
@@ -215,13 +174,11 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
       isValid = false;
     }
 
-    // Validate password
     if (adminPassword === "") {
       document.getElementById("adminPassword-error").textContent = "Password is required.";
       isValid = false;
     }
 
-    // Validate confirm password
     if (cpassword === "") {
       document.getElementById("cpassword-error").textContent = "Confirm Password is required.";
       isValid = false;

@@ -77,8 +77,10 @@
         <li class="nav-item">
           <a class="nav-link" href="login.php">Login</a>
         </li>
-
-        <li class="nav-item dropdown" style="margin-right:50px;">
+        <li class="nav-item">
+          <a class="nav-link" href="registration.php">Registration</a>
+        </li>
+        <!-- <li class="nav-item dropdown" style="margin-right:50px;">
           <a class="nav-link dropdown-toggle" href="registration.php" role="button" data-bs-toggle="dropdown" aria-expanded="false">
           Register
           </a>
@@ -86,7 +88,7 @@
             <li><a class="dropdown-item" href="registration.php">User Register</a></li>
             <li><a class="dropdown-item" href="admin_registration.php">Admin Register</a></li>
           </ul>
-        </li>
+        </li> -->
 
           <?php
         }
